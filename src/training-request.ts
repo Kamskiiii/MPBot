@@ -2,24 +2,106 @@ import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  ChannelType,
+  Client,
   EmbedBuilder,
   MessageFlags,
   type ButtonInteraction,
-  type TextChannel,
-  type NewsChannel,
-  ChannelType,
 } from 'discord.js';
+import type { createApiClient } from './api.js';
 import type { VpBotConfigFromApi } from './config.js';
 import { inviteMembersByRoles } from './invite-thread-members.js';
 
 export const TRAINING_REQUEST_BUTTON_ID = 'vp_training_request_btn';
 
 const DEFAULT_INSTRUCTOR_ROLE_ID = '1559881652287574058';
+const DEFAULT_TRAINING_TITLE = '🎓 Запрос обучения';
+const DEFAULT_TRAINING_DESCRIPTION = [
+  'Нажмите кнопку ниже, чтобы подать заявку на прохождение обучения в Военной Полиции.',
+  '',
+  '_Модерация проходит в приватных ветках._',
+].join('\n');
+
+type ApiClient = ReturnType<typeof createApiClient>;
+
+function trainingEmbed(cfg: VpBotConfigFromApi): EmbedBuilder {
+  const trainingCfg = (cfg as any).training || {};
+  const title = trainingCfg.panelTitle?.trim() || DEFAULT_TRAINING_TITLE;
+  const description = trainingCfg.panelDescription?.trim() || DEFAULT_TRAINING_DESCRIPTION;
+
+  return new EmbedBuilder()
+    .setTitle(title)
+    .setDescription(description)
+    .setColor(0x3498db);
+}
+
+function trainingComponents() {
+  return [
+    new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder()
+        .setCustomId(TRAINING_REQUEST_BUTTON_ID)
+        .setLabel('Запросить обучение')
+        .setStyle(ButtonStyle.Success),
+    ),
+  ];
+}
+
+/** Публикует или обновляет embed с кнопкой запроса обучения; сохраняет id сообщения в API. */
+export async function syncTrainingPanel(
+  client: Client,
+  cfg: VpBotConfigFromApi,
+  api: ApiClient,
+): Promise<void> {
+  const trainingCfg = (cfg as any).training || {};
+  // Используем переданный ID канала обучения напрямую или из конфига
+  const chId = trainingCfg.channelId?.trim() || '1559874341447934063';
+  if (!chId) return;
+
+  const botId = client.user?.id;
+  if (!botId) return;
+
+  const raw = await client.channels.fetch(chId).catch(() => null);
+  if (!raw || raw.type !== ChannelType.GuildText) {
+    console.warn(
+      'training-panel: канал training.channelId должен быть обычным текстовым (#text)',
+    );
+    return;
+  }
+
+  if (cfg.guildId?.trim() && raw.guildId !== cfg.guildId.trim()) {
+    console.warn('training-panel: канал не принадлежит указанному guildId');
+    return;
+  }
+
+  const payload = {
+    embeds: [trainingEmbed(cfg)],
+    components: trainingComponents(),
+  };
+
+  const tryEdit = async (messageId: string): Promise<boolean> => {
+    const msg = await raw.messages.fetch(messageId).catch(() => null);
+    if (!msg || msg.author.id !== botId) return false;
+    await msg.edit(payload);
+    return true;
+  };
+
+  const storedId = trainingCfg.messageId?.trim();
+  if (storedId && (await tryEdit(storedId))) {
+    return;
+  }
+
+  const sent = await raw.send(payload);
+  if (typeof (api as any).setTrainingPanelMessageId === 'function') {
+    await (api as any).setTrainingPanelMessageId(sent.id);
+  }
+}
 
 export async function handleTrainingRequestButton(
   interaction: ButtonInteraction,
   cfg: VpBotConfigFromApi,
 ): Promise<void> {
+  if (interaction.customId !== TRAINING_REQUEST_BUTTON_ID) return;
+
   if (!interaction.guild || !interaction.channel) {
     await interaction.reply({ content: 'Ошибка контекста сервера.', flags: MessageFlags.Ephemeral });
     return;

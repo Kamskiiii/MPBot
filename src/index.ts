@@ -100,6 +100,7 @@ import {
 import {
   TRAINING_REQUEST_BUTTON_ID,
   handleTrainingRequestButton,
+  syncTrainingPanel,
 } from './training-request.js';
 import { startWantedAlertPoller } from './wanted-alert-poller.js';
 import { startWantedDossierPoller } from './wanted-dossier-poller.js';
@@ -186,7 +187,7 @@ const client = new Client({
 // Описываем слеш-команду
 const setupTrainingCommand = new SlashCommandBuilder()
   .setName('setup-training')
-  .setDescription('Отправляет панель запроса обучения в текущий канал');
+  .setDescription('Опубликовать или обновить панель запроса обучения в канале');
 
 const ADMIN_DISCORD_ID = '683936697431490581';
 const GUILD_ID = '1267079204571185214'; // ID вашего сервера
@@ -204,6 +205,16 @@ client.once('clientReady', async () => {
     console.log('Слеш-команда /setup-training успешно зарегистрирована на сервере!');
   } catch (err) {
     console.error('Не удалось зарегистрировать слеш-команду:', err);
+  }
+
+  // Синхронизация панели обучения при запуске бота
+  try {
+    const config = await getConfig();
+    const api = apiForUrl(staticEnv.backendFallback);
+    await syncTrainingPanel(client, config, api);
+    console.log('Панель запроса обучения успешно синхронизирована!');
+  } catch (err) {
+    console.error('Ошибка при автоматической синхронизации панели обучения:', err);
   }
 
   if (!staticEnv.messageContentIntent) {
@@ -224,37 +235,45 @@ client.once('clientReady', async () => {
 
 // Обработчик взаимодействий (команды и кнопки)
 client.on('interactionCreate', async (interaction) => {
-  if (interaction.isChatInputCommand()) {
-    // Проверка прав администратора (только ваш ID)
-    if (interaction.user.id !== ADMIN_DISCORD_ID) {
-      await interaction.reply({ 
-        content: 'У вас нет прав на использование этой команды.', 
-        flags: MessageFlags.Ephemeral 
-      });
+  try {
+    // Обработка нажатий на кнопки
+    if (interaction.isButton()) {
+      if (interaction.customId === TRAINING_REQUEST_BUTTON_ID) {
+        const config = await getConfig();
+        await handleTrainingRequestButton(interaction, config);
+        return;
+      }
       return;
     }
 
-    if (interaction.commandName === 'setup-training') {
-      const channel = interaction.channel;
-      if (!channel) {
-        await interaction.reply({ content: 'Не удалось определить канал.', flags: MessageFlags.Ephemeral });
+    // Обработка слеш-команд
+    if (interaction.isChatInputCommand()) {
+      if (interaction.user.id !== ADMIN_DISCORD_ID) {
+        await interaction.reply({ 
+          content: 'У вас нет прав на использование этой команды.', 
+          flags: MessageFlags.Ephemeral 
+        });
         return;
       }
 
-      const embed = new EmbedBuilder()
-        .setTitle('🏆 Запрос обучения')
-        .setDescription('Нажмите на кнопку ниже, чтобы подать заявку на прохождение обучения в Военной Полиции.')
-        .setColor(0x3498db);
-
-      const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        new ButtonBuilder()
-          .setCustomId(TRAINING_REQUEST_BUTTON_ID)
-          .setLabel('Запросить обучение')
-          .setStyle(ButtonStyle.Success)
-      );
-
-      await channel.send({ embeds: [embed], components: [row] });
-      await interaction.reply({ content: 'Панель запроса обучения успешно отправлена!', flags: MessageFlags.Ephemeral });
+      if (interaction.commandName === 'setup-training') {
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+        try {
+          const config = await getConfig();
+          const api = apiForUrl(staticEnv.backendFallback);
+          await syncTrainingPanel(client, config, api);
+          await interaction.editReply({ content: 'Панель запроса обучения успешно опубликована/обновлена!' });
+        } catch (e) {
+          console.error('Ошибка выполнения /setup-training:', e);
+          await interaction.editReply({ content: 'Произошла ошибка при публикации панели обучения.' });
+        }
+        return;
+      }
+    }
+  } catch (err) {
+    console.error('Ошибка в обработчике interactionCreate:', err);
+    if (interaction.isRepliable() && !interaction.replied && !interaction.deferred) {
+      await interaction.reply({ content: 'Произошла непредвиденная ошибка.', flags: MessageFlags.Ephemeral }).catch(() => {});
     }
   }
 });
