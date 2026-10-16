@@ -1,6 +1,6 @@
 FROM node:20-alpine
 
-WORKDIR /app
+WORKDIR /usr/src/app
 
 ENV DATA_DIR=/app/data
 RUN mkdir -p /app/data && chmod 777 /app/data
