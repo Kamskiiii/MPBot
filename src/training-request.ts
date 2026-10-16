@@ -5,6 +5,8 @@ import {
   EmbedBuilder,
   MessageFlags,
   type ButtonInteraction,
+  type TextChannel,
+  type NewsChannel,
   ChannelType,
 } from 'discord.js';
 import type { VpBotConfigFromApi } from './config.js';
@@ -40,7 +42,7 @@ export async function handleTrainingRequestButton(
     }
 
     const threadName = `обучение-${userName}`.slice(0, 100);
-    const thread = await (channel as import('discord.js').TextChannel | import('discord.js').NewsChannel).threads.create({
+    const thread = await (channel as any).threads.create({
       name: threadName,
       autoArchiveDuration: 1440,
       type: ChannelType.PrivateThread,
