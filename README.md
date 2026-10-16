@@ -170,3 +170,5 @@ Prod без `SYNC_DB`: [`backend/scripts/add-vp-form-discord-thread-jobs.sql`](.
 | `401` queueThreadJob | Секрет не совпадает |
 | `400` embed | `EMBED_IMAGE_URL` — полный URL или пусто |
 | `onFormSubmit: нет e.response` | Запускали вручную — используйте `sendTestEmbed` |
+#   m p b o t l e g a c y  
+ 
