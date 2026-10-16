@@ -3,3 +3,4 @@ dist/
 .env
 *.log
 .vdv-deploy-in-progress
+.env.example
