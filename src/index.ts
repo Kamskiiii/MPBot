@@ -6,6 +6,13 @@ import {
   GatewayIntentBits,
   MessageFlags,
   Partials,
+  REST,
+  Routes,
+  SlashCommandBuilder,
+  EmbedBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
   type Message,
   type MessageReaction,
   type PartialMessageReaction,
@@ -158,26 +165,6 @@ async function getConfig(): Promise<VpBotConfigFromApi> {
   return cfg;
 }
 
-function isApproveEmoji(name: string | null): boolean {
-  return name === '✅' || name === '✔️' || name === '☑';
-}
-
-async function removeBotPendingReaction(
-  client: Client,
-  message: Message,
-  botId: string,
-): Promise<void> {
-  const pending = message.reactions.cache.find(
-    (r) => r.emoji.name === '⏳' && r.me,
-  );
-  if (!pending) return;
-  try {
-    await pending.users.remove(botId);
-  } catch {
-    /* ignore */
-  }
-}
-
 /** Guilds + GuildMessages + reactions + members. MessageContent — опционально. */
 const intents = [
   GatewayIntentBits.Guilds,
@@ -196,71 +183,80 @@ const client = new Client({
   ...(discordProxyAgent ? { rest: { agent: discordProxyAgent } } : {}),
 });
 
-client.once('clientReady', () => {
+// Описываем слеш-команду
+const setupTrainingCommand = new SlashCommandBuilder()
+  .setName('setup-training')
+  .setDescription('Отправляет панель запроса обучения в текущий канал');
+
+const ADMIN_DISCORD_ID = '683936697431490581';
+const GUILD_ID = '1267079204571185214'; // ID вашего сервера
+
+client.once('clientReady', async () => {
   console.log(`Агент ВП авторизован: ${client.user?.tag}`);
+
+  // Регистрация команды на сервере при старте
+  try {
+    const rest = new REST({ version: '10' }).setToken(staticEnv.token);
+    await rest.put(
+      Routes.applicationGuildCommands(client.user!.id, GUILD_ID),
+      { body: [setupTrainingCommand.toJSON()] },
+    );
+    console.log('Слеш-команда /setup-training успешно зарегистрирована на сервере!');
+  } catch (err) {
+    console.error('Не удалось зарегистрировать слеш-команду:', err);
+  }
+
   if (!staticEnv.messageContentIntent) {
     console.warn(
-      'VP_MESSAGE_CONTENT_INTENT не включён: бот стартует без privileged Message Content. ' +
-        'Лента на сайте будет без текста, пока в Developer Portal не включите Message Content Intent ' +
-        'и не зададите VP_MESSAGE_CONTENT_INTENT=true.',
+      'VP_MESSAGE_CONTENT_INTENT не включён: бот стартует без privileged Message Content.',
     );
   }
 
-  const panelPoller = startPanelSyncPoller(
-    client,
-    staticEnv.backendFallback,
-    apiForUrl,
-  );
-  panelPoller.start();
+  startPanelSyncPoller(client, staticEnv.backendFallback, apiForUrl).start();
+  startChannelCatalogPoller(client, staticEnv.backendFallback, apiForUrl).start();
+  startChannelMessagePoller(client, staticEnv.backendFallback, apiForUrl).start();
+  startLeaveNotifyPoller(client, staticEnv.backendFallback, apiForUrl).start();
+  startFormDiscordThreadPoller(client, staticEnv.backendFallback, apiForUrl).start();
+  startInvestigatorChoicesPoller(client, staticEnv.backendFallback, apiForUrl).start();
+  startWantedAlertPoller(client, staticEnv.backendFallback, apiForUrl).start();
+  startWantedDossierPoller(client, staticEnv.backendFallback, apiForUrl).start();
+});
 
-  const catalogPoller = startChannelCatalogPoller(
-    client,
-    staticEnv.backendFallback,
-    apiForUrl,
-  );
-  catalogPoller.start();
+// Обработчик взаимодействий (команды и кнопки)
+client.on('interactionCreate', async (interaction) => {
+  if (interaction.isChatInputCommand()) {
+    // Проверка прав администратора (только ваш ID)
+    if (interaction.user.id !== ADMIN_DISCORD_ID) {
+      await interaction.reply({ 
+        content: 'У вас нет прав на использование этой команды.', 
+        flags: MessageFlags.Ephemeral 
+      });
+      return;
+    }
 
-  const messagePoller = startChannelMessagePoller(
-    client,
-    staticEnv.backendFallback,
-    apiForUrl,
-  );
-  messagePoller.start();
+    if (interaction.commandName === 'setup-training') {
+      const channel = interaction.channel;
+      if (!channel) {
+        await interaction.reply({ content: 'Не удалось определить канал.', flags: MessageFlags.Ephemeral });
+        return;
+      }
 
-  const leaveNotifyPoller = startLeaveNotifyPoller(
-    client,
-    staticEnv.backendFallback,
-    apiForUrl,
-  );
-  leaveNotifyPoller.start();
+      const embed = new EmbedBuilder()
+        .setTitle('🏆 Запрос обучения')
+        .setDescription('Нажмите на кнопку ниже, чтобы подать заявку на прохождение обучения в Военной Полиции.')
+        .setColor(0x3498db);
 
-  const formThreadPoller = startFormDiscordThreadPoller(
-    client,
-    staticEnv.backendFallback,
-    apiForUrl,
-  );
-  formThreadPoller.start();
+      const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder()
+          .setCustomId(TRAINING_REQUEST_BUTTON_ID)
+          .setLabel('Запросить обучение')
+          .setStyle(ButtonStyle.Success)
+      );
 
-  const investigatorPoller = startInvestigatorChoicesPoller(
-    client,
-    staticEnv.backendFallback,
-    apiForUrl,
-  );
-  investigatorPoller.start();
-
-  const wantedAlertPoller = startWantedAlertPoller(
-    client,
-    staticEnv.backendFallback,
-    apiForUrl,
-  );
-  wantedAlertPoller.start();
-
-  const wantedDossierPoller = startWantedDossierPoller(
-    client,
-    staticEnv.backendFallback,
-    apiForUrl,
-  );
-  wantedDossierPoller.start();
+      await channel.send({ embeds: [embed], components: [row] });
+      await interaction.reply({ content: 'Панель запроса обучения успешно отправлена!', flags: MessageFlags.Ephemeral });
+    }
+  }
 });
 
 loginWithRetries(client, staticEnv.token).catch((err) => {
