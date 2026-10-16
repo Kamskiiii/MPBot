@@ -1,6 +1,6 @@
-import './load-env.ts';
+import './load-env.js';
 /** До discord.js: патчит WebSocket при DISCORD_PROXY. */
-import { getDiscordProxyRestAgent } from './proxy-setup.ts';
+import { getDiscordProxyRestAgent } from './proxy-setup.js';
 import {
   Client,
   GatewayIntentBits,
@@ -12,15 +12,15 @@ import {
   type PartialUser,
   type User,
 } from 'discord.js';
-import { applyDiscordRoleSync } from './apply-discord-role-sync.ts';
-import { createApiClient, ApiError } from './api.ts';
-import { loadStaticEnv, type VpBotConfigFromApi } from './config.ts';
-import { startPanelSyncPoller } from './panel-sync.ts';
-import { startChannelCatalogPoller } from './channel-catalog-poller.ts';
-import { startChannelMessagePoller } from './channel-message-poller.ts';
-import { startLeaveNotifyPoller } from './leave-notify-poller.ts';
-import { startFormDiscordThreadPoller } from './form-discord-thread-poller.ts';
-import { startInvestigatorChoicesPoller } from './investigator-choices-poller.ts';
+import { applyDiscordRoleSync } from './apply-discord-role-sync.js';
+import { createApiClient, ApiError } from './api.js';
+import { loadStaticEnv, type VpBotConfigFromApi } from './config.js';
+import { startPanelSyncPoller } from './panel-sync.js';
+import { startChannelCatalogPoller } from './channel-catalog-poller.js';
+import { startChannelMessagePoller } from './channel-message-poller.js';
+import { startLeaveNotifyPoller } from './leave-notify-poller.js';
+import { startFormDiscordThreadPoller } from './form-discord-thread-poller.js';
+import { startInvestigatorChoicesPoller } from './investigator-choices-poller.js';
 import {
   CANDIDATE_APPLICATION_MODAL_ID,
   CANDIDATE_APPROVE_BUTTON_PREFIX,
@@ -36,7 +36,7 @@ import {
   handleCandidateRejectModalSubmit,
   handleWelcomeCandidateButton,
   isCandidateApplicationContext,
-} from './candidate-application.ts';
+} from './candidate-application.js';
 import {
   canModerateLeaveRequest,
   findLeaveRequestIdByThread,
@@ -51,7 +51,7 @@ import {
   postLeaveNotifyMessage,
   purgeLeaveRequestThread,
   ACTIONS_LEAVE_BUTTON_ID,
-} from './leave-request.ts';
+} from './leave-request.js';
 import {
   canModerateRoleRequest,
   findRoleRequestIdByThread,
@@ -68,14 +68,14 @@ import {
   ROLE_REQUEST_REJECT_MODAL_PREFIX,
   ROLE_REQUEST_SUBMIT_PREFIX,
   ACTIONS_ROLE_REQUEST_BUTTON_ID,
-} from './role-request.ts';
+} from './role-request.js';
 import {
   handleWelcomeGuestButton,
   handleWelcomeGuestModalSubmit,
   VP_GUEST_APPLICATION_MODAL_ID,
   WELCOME_CANDIDATE_BUTTON_ID,
   WELCOME_GUEST_BUTTON_ID,
-} from './welcome-panel.ts';
+} from './welcome-panel.js';
 import {
   handleWantedAddButton,
   handleWantedAddModalSubmit,
@@ -89,13 +89,13 @@ import {
   WANTED_REMOVE_BUTTON_ID,
   WANTED_REMOVE_PAGE_PREFIX,
   WANTED_REMOVE_SELECT_PREFIX,
-} from './wanted-panel.ts';
+} from './wanted-panel.js';
 import {
   TRAINING_REQUEST_BUTTON_ID,
   handleTrainingRequestButton,
-} from './training-request.ts';
-import { startWantedAlertPoller } from './wanted-alert-poller.ts';
-import { startWantedDossierPoller } from './wanted-dossier-poller.ts';
+} from './training-request.js';
+import { startWantedAlertPoller } from './wanted-alert-poller.js';
+import { startWantedDossierPoller } from './wanted-dossier-poller.js';
 
 function errorCode(e: unknown): string | undefined {
   if (e && typeof e === 'object' && 'code' in e) {
