@@ -34,13 +34,13 @@ export async function handleTrainingRequestButton(
 
   try {
     const channel = interaction.channel;
-    if (!channel.isTextBased() || channel.isDMBased()) {
+    if (!channel.isTextBased() || channel.isDMBased() || !('threads' in channel)) {
       await interaction.editReply({ content: 'Эту кнопку можно нажать только в текстовом канале сервера.' });
       return;
     }
 
     const threadName = `обучение-${userName}`.slice(0, 100);
-    const thread = await channel.threads.create({
+    const thread = await (channel as import('discord.js').TextChannel | import('discord.js').NewsChannel).threads.create({
       name: threadName,
       autoArchiveDuration: 1440,
       type: ChannelType.PrivateThread,
