@@ -13,7 +13,7 @@ import {
   type ModalSubmitInteraction,
 } from 'discord.js';
 import type { createApiClient } from './api.js'; //
-import type { VpBotConfigFromApi } from './config.js'; //
+import type { BotConfig } from './config.js'; //
 import { setMemberNicknameFromFullName } from './nickname.js'; //
 
 export const WELCOME_GUEST_BUTTON_ID = 'vp_welcome_guest_role';
@@ -30,7 +30,7 @@ const DEFAULT_WELCOME_DESCRIPTION = [
   '_Если кнопки не работают, обратитесь к администрации._',
 ].join('\n');
 
-function welcomeEmbed(cfg: VpBotConfigFromApi): EmbedBuilder {
+function welcomeEmbed(cfg: BotConfig): EmbedBuilder {
   const title = cfg.welcomePanelTitle?.trim() || DEFAULT_WELCOME_TITLE;
   const description =
     cfg.welcomePanelDescription?.trim() || DEFAULT_WELCOME_DESCRIPTION;
@@ -46,7 +46,7 @@ function welcomeEmbed(cfg: VpBotConfigFromApi): EmbedBuilder {
   return embed;
 }
 
-function welcomeComponents(cfg: VpBotConfigFromApi) {
+function welcomeComponents(cfg: BotConfig) {
   const guestId = cfg.guestRoleId?.trim();
   const candidateId = cfg.candidateRoleId?.trim();
   const buttons: ButtonBuilder[] = [];
@@ -90,7 +90,7 @@ function buildGuestFullNameModal(): ModalBuilder {
 /** Публикует или обновляет embed с кнопками; сохраняет id сообщения в API. */
 export async function syncWelcomePanel(
   client: Client,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
   api: ApiClient,
 ): Promise<void> {
   const chId = cfg.welcomeChannelId?.trim();
@@ -140,7 +140,7 @@ export async function syncWelcomePanel(
 
 function validateWelcomeGuestClick(
   interaction: ButtonInteraction,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
 ): string | null {
   const welcomeCh = cfg.welcomeChannelId?.trim();
   const guestRoleId = cfg.guestRoleId?.trim();
@@ -163,7 +163,7 @@ function validateWelcomeGuestClick(
 
 export async function handleWelcomeGuestButton(
   interaction: ButtonInteraction,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
 ): Promise<void> {
   if (interaction.customId !== WELCOME_GUEST_BUTTON_ID) return;
 
@@ -189,7 +189,7 @@ export async function handleWelcomeGuestButton(
 
 export async function handleWelcomeGuestModalSubmit(
   interaction: ModalSubmitInteraction,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
 ): Promise<void> {
   if (interaction.customId !== VP_GUEST_APPLICATION_MODAL_ID) return;
 

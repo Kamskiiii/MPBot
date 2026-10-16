@@ -1,6 +1,6 @@
 import type { Client } from 'discord.js';
 import type { createApiClient } from './api.js';
-import type { VpBotConfigFromApi } from './config.js';
+import type { BotConfig } from './config.js';
 import { syncActionsPanel } from './actions-panel.js';
 import { syncWelcomePanel } from './welcome-panel.js';
 import { syncWantedPanel } from './wanted-panel.js';
@@ -29,14 +29,14 @@ export function startPanelSyncPoller(
     if (!client.isReady()) return;
     try {
       const api = apiForUrl(backendUrl);
-      const cfg: VpBotConfigFromApi = await api.getBotConfig();
+      const cfg: BotConfig = await api.getBotConfig();
 
       if (cfg.welcomePanelSyncRequested) {
         let done = false;
         try {
           if (!cfg.welcomeChannelId?.trim() || !cfg.guestRoleId?.trim()) {
             logWarn(
-              'panel-sync: задайте канал приветствия и роль гостя в /tech/vp',
+              'panel-sync: задайте канал приветствия и роль гостя в config.json',
             );
             done = true;
           } else {
@@ -56,7 +56,7 @@ export function startPanelSyncPoller(
         try {
           if (!cfg.actionsPanelChannelId?.trim()) {
             logWarn(
-              'panel-sync: задайте канал панели действий в /tech/vp',
+              'panel-sync: задайте канал панели действий в config.json',
             );
             done = true;
           } else {
@@ -93,7 +93,7 @@ export function startPanelSyncPoller(
           }
         }
       } else if (cfg.wantedPanelSyncRequested) {
-        logWarn('panel-sync: задайте канал панели розыска в /tech/vp');
+        logWarn('panel-sync: задайте канал панели розыска на стороне VDV');
         await api.ackPanelSync({ wantedPanel: true });
       }
     } catch (e) {

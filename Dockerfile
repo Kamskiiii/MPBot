@@ -2,18 +2,17 @@ FROM node:20-alpine
 
 WORKDIR /usr/src/app
 
+# Постоянные данные (SQLite). На хостинге подключите сюда Volume.
 ENV DATA_DIR=/app/data
-RUN mkdir -p /app/data && chmod 777 /app/data
+RUN mkdir -p /app/data
+
+# Запасной вариант, если для better-sqlite3 нет готового бинарника
+RUN apk add --no-cache python3 make g++
 
 COPY package*.json ./
-
-# Устанавливаем ВСЕ зависимости
-RUN npm install
+RUN npm ci
 
 COPY . .
+RUN npm run build && npm prune --omit=dev
 
-# Компилируем TypeScript с выводом ошибок в лог сборки
-RUN npx tsc --pretty || (echo "TYPESCRIPT BUILD FAILED" && exit 1)
-
-# Запускаем скомпилированное приложение
 CMD ["node", "dist/index.js"]

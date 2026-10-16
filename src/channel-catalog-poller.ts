@@ -1,6 +1,6 @@
 import { ChannelType, type Client } from 'discord.js';
 import type { createApiClient } from './api.js';
-import type { VpBotConfigFromApi } from './config.js';
+import type { BotConfig } from './config.js';
 
 type ApiFactory = (base: string) => ReturnType<typeof createApiClient>;
 type PollerLog = (message: string, error?: unknown) => void;
@@ -40,13 +40,13 @@ export function startChannelCatalogPoller(
     tickBusy = true;
     try {
       const api = apiForUrl(backendUrl);
-      const cfg: VpBotConfigFromApi = await api.getBotConfig();
+      const cfg: BotConfig = await api.getBotConfig();
       if (!cfg.channelCatalogSyncRequested) return;
 
       const gid = cfg.guildId?.trim();
       if (!gid) {
         logWarn(
-          'channel-catalog: задайте Guild ID в /tech/vp, затем обновите каталог',
+          'channel-catalog: задайте Guild ID в config.json',
         );
         await api.saveChannelCatalog([]);
         return;

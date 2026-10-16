@@ -1,26 +1,7 @@
 import { config } from 'dotenv';
-import { existsSync } from 'fs';
-import { resolve } from 'path';
-import { fileURLToPath } from 'url'; // Добавлено для ESM
-import { dirname } from 'path';     // Добавлено для ESM
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 
-/**
- * 1) корневой `.env` репозитория
- * 2) `vp-bot/.env` — перекрывает совпадающие ключи
- */
-export function loadEnvFiles(): void {
-  const __filename = fileURLToPath(import.meta.url); // Эквивалент __filename для ESM
-  const here = dirname(__filename);                  // Эквивалент __dirname для ESM
-  const repoRoot = resolve(here, '..', '..');
-  const botRoot = resolve(here, '..');
-  const rootEnv = resolve(repoRoot, '.env');
-  const botEnv = resolve(botRoot, '.env');
-  if (existsSync(rootEnv)) {
-    config({ path: rootEnv });
-  }
-  if (existsSync(botEnv)) {
-    config({ path: botEnv, override: true });
-  }
-}
-
-loadEnvFiles();
+/** Локальная разработка: `.env` в корне проекта. На хостинге переменные задаются в панели. */
+const envPath = resolve(process.cwd(), '.env');
+if (existsSync(envPath)) config({ path: envPath });

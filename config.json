@@ -1,0 +1,40 @@
+{
+  "guildId": "1267079204571185214",
+  "adminDiscordUserIds": ["683936697431490581"],
+
+  "welcomeChannelId": "",
+  "guestRoleId": "",
+  "candidateRoleId": "",
+  "welcomePanelTitle": "",
+  "welcomePanelDescription": "",
+  "welcomePanelThumbnailUrl": "",
+  "welcomePanelImageUrl": "",
+
+  "candidateApplicationChannelId": "",
+  "candidateApplicationApproverRoleIds": [],
+  "candidateApprovalAlwaysRoleIds": [],
+
+  "positionRoleIds": [],
+  "positionCategoryRoleId": "",
+  "punishmentRoleIds": [],
+  "punishmentCategoryRoleId": "",
+  "otherRoleIds": [],
+  "otherCategoryRoleId": "",
+
+  "roleRequestChannelId": "",
+  "roleRequestApproverRoleIds": [],
+
+  "leaveRequestChannelId": "",
+  "leaveApproverRoleIds": [],
+  "leaveNotifyChannelId": "",
+  "leaveActiveRoleId": "",
+
+  "actionsPanelChannelId": "",
+
+  "training": {
+    "channelId": "1559874341447934063",
+    "instructorRoleId": "1559881652287574058",
+    "panelTitle": "",
+    "panelDescription": ""
+  }
+}

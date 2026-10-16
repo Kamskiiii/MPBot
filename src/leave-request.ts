@@ -15,7 +15,7 @@ import {
   type ThreadChannel,
   type User,
 } from 'discord.js';
-import type { VpBotConfigFromApi } from './config.js';
+import type { BotConfig } from './config.js';
 import type { createApiClient, VpLeaveNotifyPayload } from './api.js';
 import { ApiError } from './api.js';
 import {
@@ -68,7 +68,7 @@ export function formatYmdRu(ymd: string): string {
   return `${m[3]}.${m[2]}.${m[1]}`;
 }
 
-export function isLeaveRequestConfigured(cfg: VpBotConfigFromApi): boolean {
+export function isLeaveRequestConfigured(cfg: BotConfig): boolean {
   const ch = cfg.leaveRequestChannelId?.trim();
   const approvers = cfg.leaveApproverRoleIds ?? [];
   return Boolean(ch && approvers.length);
@@ -76,7 +76,7 @@ export function isLeaveRequestConfigured(cfg: VpBotConfigFromApi): boolean {
 
 export function isLeaveRequestThread(
   channel: { isThread(): boolean; parentId: string | null },
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
 ): boolean {
   const parentId = cfg.leaveRequestChannelId?.trim();
   if (!parentId) return false;
@@ -85,7 +85,7 @@ export function isLeaveRequestThread(
 
 export function isLeaveRequestContext(
   message: Message,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
 ): boolean {
   const chId = cfg.leaveRequestChannelId?.trim();
   if (!chId) return false;
@@ -97,7 +97,7 @@ export function isLeaveRequestContext(
 
 export function canModerateLeaveRequest(
   member: GuildMember,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
 ): boolean {
   if (member.permissions.has(PermissionFlagsBits.Administrator)) return true;
   return (cfg.leaveApproverRoleIds ?? []).some((id) =>
@@ -257,7 +257,7 @@ export async function postLeaveNotifyMessage(
 
 export async function handleWelcomeLeaveButton(
   interaction: ButtonInteraction,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
 ): Promise<void> {
   if (
     interaction.customId !== ACTIONS_LEAVE_BUTTON_ID &&
@@ -330,7 +330,7 @@ function buildLeaveModerationMessage(params: {
 
 export async function handleLeaveApplicationModalSubmit(
   interaction: ModalSubmitInteraction,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
   api: ApiClient,
 ): Promise<void> {
   if (interaction.customId !== LEAVE_APPLICATION_MODAL_ID) return;
@@ -439,7 +439,7 @@ export async function handleLeaveApplicationModalSubmit(
 
 export async function handleLeaveRejectButton(
   interaction: ButtonInteraction,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
 ): Promise<void> {
   const threadId = threadIdFromPrefixedCustomId(
     LEAVE_REJECT_BUTTON_PREFIX,
@@ -484,7 +484,7 @@ export async function handleLeaveRejectButton(
 
 export async function handleLeaveRejectModalSubmit(
   interaction: ModalSubmitInteraction,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
   api: ApiClient,
 ): Promise<void> {
   const threadId = threadIdFromPrefixedCustomId(
