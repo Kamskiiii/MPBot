@@ -40,12 +40,12 @@ export async function handleTrainingRequestButton(
 
 
     const threadName = `обучение-${userName}`.slice(0, 100);
-    const thread = await (channel as any).threads.create({
-    name: threadName,
-    autoArchiveDuration: 1440,
-    type: ChannelType.PrivateThread,
-    reason: `Запрос обучения от ${userName}`,
-  });
+    const thread = await channel.threads.create({
+      name: threadName,
+      autoArchiveDuration: 1440,
+      type: ChannelType.PrivateThread,
+      reason: `Запрос обучения от ${userName}`,
+    });
 
 
     await thread.members.add(user.id);
