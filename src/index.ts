@@ -1,6 +1,6 @@
-import './load-env';
+import './load-env.ts';
 /** До discord.js: патчит WebSocket при DISCORD_PROXY. */
-import { getDiscordProxyRestAgent } from './proxy-setup';
+import { getDiscordProxyRestAgent } from './proxy-setup.ts';
 import {
   Client,
   GatewayIntentBits,
@@ -12,15 +12,15 @@ import {
   type PartialUser,
   type User,
 } from 'discord.js';
-import { applyDiscordRoleSync } from './apply-discord-role-sync';
-import { createApiClient, ApiError } from './api';
-import { loadStaticEnv, type VpBotConfigFromApi } from './config';
-import { startPanelSyncPoller } from './panel-sync';
-import { startChannelCatalogPoller } from './channel-catalog-poller';
-import { startChannelMessagePoller } from './channel-message-poller';
-import { startLeaveNotifyPoller } from './leave-notify-poller';
-import { startFormDiscordThreadPoller } from './form-discord-thread-poller';
-import { startInvestigatorChoicesPoller } from './investigator-choices-poller';
+import { applyDiscordRoleSync } from './apply-discord-role-sync.ts';
+import { createApiClient, ApiError } from './api.ts';
+import { loadStaticEnv, type VpBotConfigFromApi } from './config.ts';
+import { startPanelSyncPoller } from './panel-sync.ts';
+import { startChannelCatalogPoller } from './channel-catalog-poller.ts';
+import { startChannelMessagePoller } from './channel-message-poller.ts';
+import { startLeaveNotifyPoller } from './leave-notify-poller.ts';
+import { startFormDiscordThreadPoller } from './form-discord-thread-poller.ts';
+import { startInvestigatorChoicesPoller } from './investigator-choices-poller.ts';
 import {
   CANDIDATE_APPLICATION_MODAL_ID,
   CANDIDATE_APPROVE_BUTTON_PREFIX,
@@ -36,7 +36,7 @@ import {
   handleCandidateRejectModalSubmit,
   handleWelcomeCandidateButton,
   isCandidateApplicationContext,
-} from './candidate-application';
+} from './candidate-application.ts';
 import {
   canModerateLeaveRequest,
   findLeaveRequestIdByThread,
@@ -51,7 +51,7 @@ import {
   postLeaveNotifyMessage,
   purgeLeaveRequestThread,
   ACTIONS_LEAVE_BUTTON_ID,
-} from './leave-request';
+} from './leave-request.ts';
 import {
   canModerateRoleRequest,
   findRoleRequestIdByThread,
@@ -68,14 +68,14 @@ import {
   ROLE_REQUEST_REJECT_MODAL_PREFIX,
   ROLE_REQUEST_SUBMIT_PREFIX,
   ACTIONS_ROLE_REQUEST_BUTTON_ID,
-} from './role-request';
+} from './role-request.ts';
 import {
   handleWelcomeGuestButton,
   handleWelcomeGuestModalSubmit,
   VP_GUEST_APPLICATION_MODAL_ID,
   WELCOME_CANDIDATE_BUTTON_ID,
   WELCOME_GUEST_BUTTON_ID,
-} from './welcome-panel';
+} from './welcome-panel.ts';
 import {
   handleWantedAddButton,
   handleWantedAddModalSubmit,
@@ -89,13 +89,13 @@ import {
   WANTED_REMOVE_BUTTON_ID,
   WANTED_REMOVE_PAGE_PREFIX,
   WANTED_REMOVE_SELECT_PREFIX,
-} from './wanted-panel';
+} from './wanted-panel.ts';
 import {
   TRAINING_REQUEST_BUTTON_ID,
   handleTrainingRequestButton,
-} from './training-request';
-import { startWantedAlertPoller } from './wanted-alert-poller';
-import { startWantedDossierPoller } from './wanted-dossier-poller';
+} from './training-request.ts';
+import { startWantedAlertPoller } from './wanted-alert-poller.ts';
+import { startWantedDossierPoller } from './wanted-dossier-poller.ts';
 
 function errorCode(e: unknown): string | undefined {
   if (e && typeof e === 'object' && 'code' in e) {
@@ -229,288 +229,4 @@ client.once('clientReady', () => {
     apiForUrl,
   );
   leaveNotifyPoller.start();
-  const formThreadPoller = startFormDiscordThreadPoller(
-    client,
-    staticEnv.backendFallback,
-    apiForUrl,
-  );
-  formThreadPoller.start();
-  const investigatorPoller = startInvestigatorChoicesPoller(
-    client,
-    staticEnv.backendFallback,
-    apiForUrl,
-  );
-  investigatorPoller.start();
-  const wantedAlertPoller = startWantedAlertPoller(
-    client,
-    staticEnv.backendFallback,
-    apiForUrl,
-  );
-  wantedAlertPoller.start();
-  const wantedDossierPoller = startWantedDossierPoller(
-    client,
-    staticEnv.backendFallback,
-    apiForUrl,
-  );
-  wantedDossierPoller.start();
-  console.log(
-    `Панель, каталог, лента, отпуска, ветки Form, следователи и розыск: опрос API (${staticEnv.backendFallback})`,
-  );
-});
-
-client.on('interactionCreate', async (interaction) => {
-  try {
-    if (interaction.isButton()) {
-      const cfg = await getConfig();
-      const api = apiForUrl(staticEnv.backendFallback);
-      if (interaction.customId === WELCOME_GUEST_BUTTON_ID) {
-        await handleWelcomeGuestButton(interaction, cfg);
-        return;
-      }
-      if (interaction.customId === WELCOME_CANDIDATE_BUTTON_ID) {
-        await handleWelcomeCandidateButton(interaction, cfg);
-        return;
-      }
-      if (
-        interaction.customId === ACTIONS_ROLE_REQUEST_BUTTON_ID ||
-        interaction.customId === 'vp_welcome_role_request'
-      ) {
-        await handleWelcomeRoleRequestButton(interaction, cfg);
-        return;
-      }
-      if (
-        interaction.customId === ACTIONS_LEAVE_BUTTON_ID ||
-        interaction.customId === 'vp_welcome_leave_request'
-      ) {
-        await handleWelcomeLeaveButton(interaction, cfg);
-        return;
-      }
-      if (interaction.customId === TRAINING_REQUEST_BUTTON_ID) {
-        await handleTrainingRequestButton(interaction, cfg);
-        return;
-      }
-      if (interaction.customId.startsWith(ROLE_REQUEST_SUBMIT_PREFIX)) {
-        await handleRoleRequestSubmit(interaction, cfg, api);
-        return;
-      }
-      if (interaction.customId.startsWith(CANDIDATE_APPROVE_BUTTON_PREFIX)) {
-        await handleCandidateApproveButton(interaction, cfg);
-        return;
-      }
-      if (interaction.customId.startsWith(CANDIDATE_REJECT_BUTTON_PREFIX)) {
-        await handleCandidateRejectButton(interaction, cfg);
-        return;
-      }
-      if (interaction.customId.startsWith(ROLE_REQUEST_REJECT_BUTTON_PREFIX)) {
-        await handleRoleRequestRejectButton(interaction, cfg);
-        return;
-      }
-      if (interaction.customId.startsWith(LEAVE_REJECT_BUTTON_PREFIX)) {
-        await handleLeaveRejectButton(interaction, cfg);
-        return;
-      }
-      if (interaction.customId === WANTED_ADD_BUTTON_ID) {
-        await handleWantedAddButton(interaction, cfg);
-        return;
-      }
-      if (interaction.customId === WANTED_REMOVE_BUTTON_ID) {
-        await handleWantedRemoveButton(interaction, cfg, api);
-        return;
-      }
-      if (interaction.customId.startsWith(WANTED_REMOVE_PAGE_PREFIX)) {
-        await handleWantedRemovePageButton(interaction, cfg, api);
-        return;
-      }
-      return;
-    }
-    if (interaction.isStringSelectMenu()) {
-      const cfg = await getConfig();
-      const api = apiForUrl(staticEnv.backendFallback);
-      if (interaction.customId.startsWith(CANDIDATE_APPROVE_SELECT_PREFIX)) {
-        await handleCandidateApproveSelect(interaction, cfg, api);
-        return;
-      }
-      if (
-        interaction.customId.startsWith(ROLE_REQUEST_POSITION_SELECT_PREFIX) ||
-        interaction.customId.startsWith(ROLE_REQUEST_OTHER_SELECT_PREFIX)
-      ) {
-        await handleRoleRequestSelect(interaction);
-        return;
-      }
-      if (interaction.customId === WANTED_CLASS_SELECT_ID) {
-        await handleWantedClassSelect(interaction, cfg, api);
-        return;
-      }
-      if (interaction.customId.startsWith(WANTED_REMOVE_SELECT_PREFIX)) {
-        await handleWantedRemoveSelect(interaction, cfg, api);
-        return;
-      }
-      return;
-    }
-    if (interaction.isModalSubmit()) {
-      const cfg = await getConfig();
-      const api = apiForUrl(staticEnv.backendFallback);
-      if (interaction.customId === VP_GUEST_APPLICATION_MODAL_ID) {
-        await handleWelcomeGuestModalSubmit(interaction, cfg);
-        return;
-      }
-      if (interaction.customId === CANDIDATE_APPLICATION_MODAL_ID) {
-        await handleCandidateApplicationModalSubmit(interaction, cfg, api);
-        return;
-      }
-      if (interaction.customId === LEAVE_APPLICATION_MODAL_ID) {
-        await handleLeaveApplicationModalSubmit(interaction, cfg, api);
-        return;
-      }
-      if (interaction.customId.startsWith(CANDIDATE_REJECT_MODAL_PREFIX)) {
-        await handleCandidateRejectModalSubmit(interaction, cfg, api);
-        return;
-      }
-      if (interaction.customId.startsWith(ROLE_REQUEST_REJECT_MODAL_PREFIX)) {
-        await handleRoleRequestRejectModalSubmit(interaction, cfg, api);
-        return;
-      }
-      if (interaction.customId.startsWith(LEAVE_REJECT_MODAL_PREFIX)) {
-        await handleLeaveRejectModalSubmit(interaction, cfg, api);
-        return;
-      }
-      if (interaction.customId === WANTED_ADD_MODAL_ID) {
-        await handleWantedAddModalSubmit(interaction, cfg);
-      }
-    }
-  } catch (e) {
-    console.warn('interaction: vp-agent', e);
-    if (!interaction.isRepliable()) return;
-    if (interaction.deferred || interaction.replied) return;
-    await interaction
-      .reply({
-        content: 'Временная ошибка. Попробуйте позже.',
-        flags: MessageFlags.Ephemeral,
-      })
-      .catch(() => undefined);
-  }
-});
-
-client.on('messageCreate', async (message) => {
-  try {
-    if (message.author.bot) return;
-    if (!message.guild || !message.channel.isThread()) return;
-    const cfg = await getConfig();
-    if (!isCandidateApplicationContext(message, cfg)) return;
-
-    const api = apiForUrl(staticEnv.backendFallback);
-    const requestId = await findCandidateRequestIdByThread(
-      api,
-      message.channel.id,
-    );
-    if (!requestId) return;
-
-    const pending = await api.getPendingRequests();
-    const row = pending.find((r) => r.id === requestId);
-    if (!row) return;
-    const data = (row.payload as { data?: Record<string, unknown> }).data;
-    const applicantId =
-      typeof data?.applicantDiscordUserId === 'string'
-        ? data.applicantDiscordUserId.trim()
-        : null;
-    if (!applicantId || message.author.id === applicantId) return;
-
-    const applicant = await client.users.fetch(applicantId).catch(() => null);
-    if (!applicant) return;
-
-    const authorLabel =
-      message.member?.displayName?.trim() ||
-      message.author.displayName ||
-      message.author.username;
-    await dmApplicantAboutNewThreadMessage(
-      applicant,
-      message.channel,
-      authorLabel,
-      message.content ?? '',
-    );
-  } catch (e) {
-    console.warn('messageCreate: candidate thread notify', e);
-  }
-});
-
-async function handleReaction(
-  reaction: MessageReaction | PartialMessageReaction,
-  user: User | PartialUser,
-): Promise<void> {
-  if (user.bot) return;
-  try {
-    if (reaction.partial) {
-      await reaction.fetch();
-    }
-    if (reaction.message.partial) {
-      await reaction.message.fetch();
-    }
-  } catch {
-    return;
-  }
-
-  const message = reaction.message;
-  if (!message.guild || message.author?.id !== client.user?.id) return;
-  if (!isApproveEmoji(reaction.emoji.name)) return;
-  if (!message.channel.isThread()) return;
-
-  const cfg = await getConfig();
-  const api = apiForUrl(staticEnv.backendFallback);
-  const member = await message.guild.members.fetch(user.id).catch(() => null);
-  if (!member) return;
-
-  const botId = client.user?.id;
-
-  // Decorative roles
-  if (isRoleRequestContext(message as Message, cfg)) {
-    if (!canModerateRoleRequest(member, cfg)) return;
-    const reqId = await findRoleRequestIdByThread(api, message.channel.id);
-    if (!reqId) return;
-    try {
-      const res = await api.setStatus(reqId, 'approved', user.id);
-      if (res.discordRoleSync) {
-        await applyDiscordRoleSync(message.guild, res.discordRoleSync);
-      }
-      if (botId) {
-        await removeBotPendingReaction(client, message as Message, botId);
-      }
-      await purgeRoleRequestThread(message.channel);
-    } catch (e) {
-      if (e instanceof ApiError && e.status === 409) return;
-      console.error('role-request approve reaction', e);
-    }
-    return;
-  }
-
-  // Leave
-  if (isLeaveRequestContext(message as Message, cfg)) {
-    if (!canModerateLeaveRequest(member, cfg)) return;
-    const reqId = await findLeaveRequestIdByThread(api, message.channel.id);
-    if (!reqId) return;
-    try {
-      const res = await api.setStatus(reqId, 'approved', user.id);
-      if (res.discordRoleSync) {
-        await applyDiscordRoleSync(message.guild, res.discordRoleSync);
-      }
-      if (res.leaveNotify) {
-        await postLeaveNotifyMessage(message.guild, api, res.leaveNotify);
-      }
-      if (botId) {
-        await removeBotPendingReaction(client, message as Message, botId);
-      }
-      await purgeLeaveRequestThread(message.channel);
-    } catch (e) {
-      if (e instanceof ApiError && e.status === 409) return;
-      console.error('leave-request approve reaction', e);
-    }
-  }
-}
-
-client.on('messageReactionAdd', (reaction, user) => {
-  void handleReaction(reaction, user);
-});
-
-void loginWithRetries(client, staticEnv.token).catch((e) => {
-  console.error('Не удалось войти в Discord', e);
-  process.exit(1);
-});
+  const formThreadPoller = start

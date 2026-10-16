@@ -1,5 +1,5 @@
 import { Client } from 'discord.js';
-import type { createApiClient } from './api';
+import type { createApiClient } from './api.ts'; //
 
 type ApiFactory = (baseUrl: string) => ReturnType<typeof createApiClient>;
 

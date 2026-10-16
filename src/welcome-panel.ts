@@ -12,9 +12,9 @@ import {
   type ButtonInteraction,
   type ModalSubmitInteraction,
 } from 'discord.js';
-import type { createApiClient } from './api';
-import type { VpBotConfigFromApi } from './config';
-import { setMemberNicknameFromFullName } from './nickname';
+import type { createApiClient } from './api.ts'; //
+import type { VpBotConfigFromApi } from './config.ts'; //
+import { setMemberNicknameFromFullName } from './nickname.ts'; //
 
 export const WELCOME_GUEST_BUTTON_ID = 'vp_welcome_guest_role';
 export const WELCOME_CANDIDATE_BUTTON_ID = 'vp_welcome_candidate_role';

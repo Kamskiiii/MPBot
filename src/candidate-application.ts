@@ -19,13 +19,13 @@ import {
   type ThreadChannel,
   type User,
 } from 'discord.js';
-import type { VpBotConfigFromApi } from './config';
-import type { createApiClient } from './api';
-import { ApiError } from './api';
-import { applyDiscordRoleSync } from './apply-discord-role-sync';
-import { inviteMembersByRoles } from './invite-thread-members';
-import { setMemberNicknameFromFullName } from './nickname';
-import { WELCOME_CANDIDATE_BUTTON_ID } from './welcome-panel';
+import type { VpBotConfigFromApi } from './config.ts';
+import type { createApiClient } from './api.ts';
+import { ApiError } from './api.ts';
+import { applyDiscordRoleSync } from './apply-discord-role-sync.ts';
+import { inviteMembersByRoles } from './invite-thread-members.ts';
+import { setMemberNicknameFromFullName } from './nickname.ts';
+import { WELCOME_CANDIDATE_BUTTON_ID } from './welcome-panel.ts';
 
 export const CANDIDATE_APPLICATION_MODAL_ID = 'vp_candidate_application_modal';
 export const CANDIDATE_APPROVE_BUTTON_PREFIX = 'vp_candidate_approve:';

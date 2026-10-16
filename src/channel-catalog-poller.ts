@@ -1,6 +1,6 @@
 import { ChannelType, type Client } from 'discord.js';
-import type { createApiClient } from './api';
-import type { VpBotConfigFromApi } from './config';
+import type { createApiClient } from './api.ts';
+import type { VpBotConfigFromApi } from './config.ts';
 
 type ApiFactory = (base: string) => ReturnType<typeof createApiClient>;
 type PollerLog = (message: string, error?: unknown) => void;

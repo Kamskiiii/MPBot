@@ -4,7 +4,7 @@ import {
   EmbedBuilder,
   type TextChannel,
 } from 'discord.js';
-import type { createApiClient, WantedAlertJob, WantedClass } from './api';
+import type { createApiClient, WantedAlertJob, WantedClass } from './api.ts'; //
 
 type ApiFactory = (baseUrl: string) => ReturnType<typeof createApiClient>;
 

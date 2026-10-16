@@ -17,13 +17,13 @@ import {
   type ThreadChannel,
   type User,
 } from 'discord.js';
-import type { VpBotConfigFromApi } from './config';
-import type { createApiClient } from './api';
-import { ApiError } from './api';
+import type { VpBotConfigFromApi } from './config.ts'; //
+import type { createApiClient } from './api.ts'; //
+import { ApiError } from './api.ts'; //
 import {
   openPrivateApplicationThread,
   purgeAndDeleteThread,
-} from './thread-helpers';
+} from './thread-helpers.ts'; //
 
 export const ACTIONS_ROLE_REQUEST_BUTTON_ID = 'vp_actions_role_request';
 /** @deprecated alias — старые сообщения welcome */

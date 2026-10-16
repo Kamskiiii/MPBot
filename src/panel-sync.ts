@@ -1,7 +1,7 @@
 import type { Client } from 'discord.js';
-import type { createApiClient } from './api';
-import type { VpBotConfigFromApi } from './config';
-import { syncActionsPanel } from './actions-panel';
+import type { createApiClient } from './api.ts'; //
+import type { VpBotConfigFromApi } from './config.ts'; //
+import { syncActionsPanel } from './actions-panel.ts'; //
 import { syncWelcomePanel } from './welcome-panel';
 import { syncWantedPanel } from './wanted-panel';
 

@@ -2,6 +2,7 @@
   "name": "vdv-vp-bot",
   "private": true,
   "version": "0.0.1",
+  "type": "module",
   "description": "Discord-агент ВП → Nest API VDV (welcome / роль гостя)",
   "scripts": {
     "build": "tsc",

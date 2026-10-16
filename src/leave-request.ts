@@ -15,13 +15,13 @@ import {
   type ThreadChannel,
   type User,
 } from 'discord.js';
-import type { VpBotConfigFromApi } from './config';
-import type { createApiClient, VpLeaveNotifyPayload } from './api';
-import { ApiError } from './api';
+import type { VpBotConfigFromApi } from './config.ts'; //
+import type { createApiClient, VpLeaveNotifyPayload } from './api.ts'; //
+import { ApiError } from './api.ts'; //
 import {
   openPrivateApplicationThread,
   purgeAndDeleteThread,
-} from './thread-helpers';
+} from './thread-helpers.ts'; //
 
 export const ACTIONS_LEAVE_BUTTON_ID = 'vp_actions_leave_request';
 /** @deprecated alias */

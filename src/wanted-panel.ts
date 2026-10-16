@@ -17,9 +17,9 @@ import {
   type ModalSubmitInteraction,
   type StringSelectMenuInteraction,
 } from 'discord.js';
-import type { createApiClient, WantedBoardPayload, WantedClass } from './api';
-import { ApiError } from './api';
-import type { VpBotConfigFromApi } from './config';
+import type { createApiClient, WantedBoardPayload, WantedClass } from './api.ts'; //
+import { ApiError } from './api.ts'; //
+import type { VpBotConfigFromApi } from './config.ts'; //
 
 type ApiClient = ReturnType<typeof createApiClient>;
 

@@ -1,5 +1,5 @@
 import type { Guild, GuildMember } from 'discord.js';
-import type { VpDiscordRoleSyncDto } from './api';
+import type { VpDiscordRoleSyncDto } from './api.ts';
 
 function discordErrorCode(e: unknown): number | undefined {
   if (e && typeof e === 'object' && 'code' in e) {

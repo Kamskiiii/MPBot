@@ -1,4 +1,4 @@
-import type { VpBotConfigFromApi } from './config';
+import type { VpBotConfigFromApi } from './config.ts';
 
 export class ApiError extends Error {
   constructor(

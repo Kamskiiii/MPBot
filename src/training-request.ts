@@ -7,10 +7,12 @@ import {
   type ButtonInteraction,
   ChannelType,
 } from 'discord.js';
-import type { VpBotConfigFromApi } from './config';
+import type { VpBotConfigFromApi } from './config.ts';
+import { inviteMembersByRoles } from './invite-thread-members.ts';
 
 export const TRAINING_REQUEST_BUTTON_ID = 'vp_training_request_btn';
 
+const DEFAULT_INSTRUCTOR_ROLE_ID = '1559881652287574058';
 
 export async function handleTrainingRequestButton(
   interaction: ButtonInteraction,
@@ -23,9 +25,8 @@ export async function handleTrainingRequestButton(
 
   await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
- 
   const trainingCfg = (cfg as any).training || {};
-  const instructorRoleId = trainingCfg.instructorRoleId as string | undefined;
+  const instructorRoleId = (trainingCfg.instructorRoleId as string | undefined)?.trim() || DEFAULT_INSTRUCTOR_ROLE_ID;
 
   const member = interaction.member;
   const user = interaction.user;
@@ -38,7 +39,6 @@ export async function handleTrainingRequestButton(
       return;
     }
 
-
     const threadName = `обучение-${userName}`.slice(0, 100);
     const thread = await channel.threads.create({
       name: threadName,
@@ -47,8 +47,18 @@ export async function handleTrainingRequestButton(
       reason: `Запрос обучения от ${userName}`,
     });
 
-
+    // Добавляем заявителя в ветку
     await thread.members.add(user.id);
+
+    // Автоматически приглашаем в приватную ветку всех участников с ролью инструктора
+    if (instructorRoleId) {
+      await inviteMembersByRoles(
+        thread,
+        interaction.guild,
+        [instructorRoleId],
+        new Set([user.id]),
+      );
+    }
 
     const instructorMention = instructorRoleId ? `<@&${instructorRoleId}>` : 'Инструкторы';
 

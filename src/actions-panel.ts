@@ -6,10 +6,10 @@ import {
   Client,
   EmbedBuilder,
 } from 'discord.js';
-import type { createApiClient } from './api';
-import type { VpBotConfigFromApi } from './config';
-import { ACTIONS_LEAVE_BUTTON_ID } from './leave-request';
-import { ACTIONS_ROLE_REQUEST_BUTTON_ID } from './role-request';
+import type { createApiClient } from './api.ts';
+import type { VpBotConfigFromApi } from './config.ts';
+import { ACTIONS_LEAVE_BUTTON_ID } from './leave-request.ts';
+import { ACTIONS_ROLE_REQUEST_BUTTON_ID } from './role-request.ts';
 
 type ApiClient = ReturnType<typeof createApiClient>;
 

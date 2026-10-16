@@ -9,9 +9,13 @@
  */
 import { createRequire } from 'node:module';
 import Module from 'node:module';
+import { fileURLToPath } from 'url'; // Добавлено для ESM
 import { ProxyAgent, setGlobalDispatcher, type Dispatcher } from 'undici';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { SocksProxyAgent } from 'socks-proxy-agent';
+
+// Эмуляция __filename для ESM
+const __filename = fileURLToPath(import.meta.url);
 
 export type DiscordProxyRestAgent = Dispatcher;
 
