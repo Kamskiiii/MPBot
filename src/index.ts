@@ -205,28 +205,65 @@ client.once('clientReady', () => {
         'и не зададите VP_MESSAGE_CONTENT_INTENT=true.',
     );
   }
+
   const panelPoller = startPanelSyncPoller(
     client,
     staticEnv.backendFallback,
     apiForUrl,
   );
   panelPoller.start();
+
   const catalogPoller = startChannelCatalogPoller(
     client,
     staticEnv.backendFallback,
     apiForUrl,
   );
   catalogPoller.start();
+
   const messagePoller = startChannelMessagePoller(
     client,
     staticEnv.backendFallback,
     apiForUrl,
   );
   messagePoller.start();
+
   const leaveNotifyPoller = startLeaveNotifyPoller(
     client,
     staticEnv.backendFallback,
     apiForUrl,
   );
   leaveNotifyPoller.start();
-  const formThreadPoller = start
+
+  const formThreadPoller = startFormDiscordThreadPoller(
+    client,
+    staticEnv.backendFallback,
+    apiForUrl,
+  );
+  formThreadPoller.start();
+
+  const investigatorPoller = startInvestigatorChoicesPoller(
+    client,
+    staticEnv.backendFallback,
+    apiForUrl,
+  );
+  investigatorPoller.start();
+
+  const wantedAlertPoller = startWantedAlertPoller(
+    client,
+    staticEnv.backendFallback,
+    apiForUrl,
+  );
+  wantedAlertPoller.start();
+
+  const wantedDossierPoller = startWantedDossierPoller(
+    client,
+    staticEnv.backendFallback,
+    apiForUrl,
+  );
+  wantedDossierPoller.start();
+});
+
+loginWithRetries(client, staticEnv.token).catch((err) => {
+  console.error('Не удалось авторизоваться в Discord:', err);
+  process.exit(1);
+});
