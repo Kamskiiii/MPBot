@@ -10,8 +10,8 @@ import type {
   createApiClient,
   WantedClass,
   WantedDossierJob,
-} from './api.ts'; //
-import { inviteMembersByRoles } from './invite-thread-members.ts'; //
+} from './api.js'; //
+import { inviteMembersByRoles } from './invite-thread-members.js'; //
 
 type ApiFactory = (baseUrl: string) => ReturnType<typeof createApiClient>;
 

@@ -6,7 +6,7 @@ import {
   type TextChannel,
   type ThreadChannel,
 } from 'discord.js';
-import { inviteMembersByRoles } from './invite-thread-members.ts'; //
+import { inviteMembersByRoles } from './invite-thread-members.js'; //
 
 export async function purgeAndDeleteThread(thread: ThreadChannel): Promise<void> {
   const maxAge = 14 * 24 * 60 * 60 * 1000;

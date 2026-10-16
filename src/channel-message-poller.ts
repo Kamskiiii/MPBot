@@ -6,8 +6,8 @@ import {
   type Message,
   type TextBasedChannel,
 } from 'discord.js';
-import type { createApiClient } from './api.ts'; //
-import { formatMessageContentForSite } from './format-message-content.ts'; //
+import type { createApiClient } from './api.js'; //
+import { formatMessageContentForSite } from './format-message-content.js'; //
 
 type ApiFactory = (base: string) => ReturnType<typeof createApiClient>;
 type PollerLog = (message: string, error?: unknown) => void;

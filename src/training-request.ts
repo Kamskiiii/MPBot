@@ -7,8 +7,8 @@ import {
   type ButtonInteraction,
   ChannelType,
 } from 'discord.js';
-import type { VpBotConfigFromApi } from './config.ts';
-import { inviteMembersByRoles } from './invite-thread-members.ts';
+import type { VpBotConfigFromApi } from './config.js';
+import { inviteMembersByRoles } from './invite-thread-members.js';
 
 export const TRAINING_REQUEST_BUTTON_ID = 'vp_training_request_btn';
 

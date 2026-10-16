@@ -3,7 +3,7 @@ import {
   Client,
   type TextChannel,
 } from 'discord.js';
-import type { createApiClient } from './api.ts'; //
+import type { createApiClient } from './api.js'; //
 
 type ApiFactory = (baseUrl: string) => ReturnType<typeof createApiClient>;
 

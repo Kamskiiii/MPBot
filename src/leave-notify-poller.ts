@@ -4,8 +4,8 @@ import {
   type TextChannel,
   type Guild,
 } from 'discord.js';
-import type { createApiClient } from './api.ts'; //
-import { applyDiscordRoleSync } from './apply-discord-role-sync.ts'; //
+import type { createApiClient } from './api.js'; //
+import { applyDiscordRoleSync } from './apply-discord-role-sync.js'; //
 import { buildLeaveNotifyEmbed } from './leave-request';
 
 type ApiFactory = (baseUrl: string) => ReturnType<typeof createApiClient>;
