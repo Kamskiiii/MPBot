@@ -1,9 +1,9 @@
 import type { Client } from 'discord.js';
-import type { createApiClient } from './api.js'; //
-import type { VpBotConfigFromApi } from './config.js'; //
-import { syncActionsPanel } from './actions-panel.js'; //
-import { syncWelcomePanel } from './welcome-panel';
-import { syncWantedPanel } from './wanted-panel';
+import type { createApiClient } from './api.js';
+import type { VpBotConfigFromApi } from './config.js';
+import { syncActionsPanel } from './actions-panel.js';
+import { syncWelcomePanel } from './welcome-panel.js';
+import { syncWantedPanel } from './wanted-panel.js';
 
 type ApiFactory = (base: string) => ReturnType<typeof createApiClient>;
 type PollerLog = (message: string, error?: unknown) => void;
