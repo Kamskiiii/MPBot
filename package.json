@@ -1,16 +1,18 @@
 {
-  "name": "vdv-vp-bot",
+  "name": "vp-bot",
   "private": true,
   "version": "0.0.1",
   "type": "module",
-  "description": "Discord-агент ВП → Nest API VDV (welcome / роль гостя)",
+  "description": "Discord-бот Военной Полиции: заявки, отпуска, роли, обучение (автономный, SQLite)",
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
     "start:dev": "tsx watch src/index.ts",
-    "dev": "tsx watch src/index.ts"
+    "dev": "tsx watch src/index.ts",
+    "test": "tsx --test test/*.test.ts"
   },
   "dependencies": {
+    "better-sqlite3": "^12.11.1",
     "discord.js": "^14.16.3",
     "dotenv": "^16.6.1",
     "https-proxy-agent": "^7.0.6",
@@ -19,6 +21,7 @@
     "ws": "^8.18.3"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^22.10.0",
     "@types/ws": "^8.18.1",
     "tsx": "^4.19.2",

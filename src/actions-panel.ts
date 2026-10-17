@@ -7,7 +7,7 @@ import {
   EmbedBuilder,
 } from 'discord.js';
 import type { createApiClient } from './api.js';
-import type { VpBotConfigFromApi } from './config.js';
+import type { BotConfig } from './config.js';
 import { ACTIONS_LEAVE_BUTTON_ID } from './leave-request.js';
 import { ACTIONS_ROLE_REQUEST_BUTTON_ID } from './role-request.js';
 
@@ -20,7 +20,7 @@ const DEFAULT_DESCRIPTION = [
   '_Модерация проходит в приватных ветках._',
 ].join('\n');
 
-export function isActionsRoleRequestEnabled(cfg: VpBotConfigFromApi): boolean {
+export function isActionsRoleRequestEnabled(cfg: BotConfig): boolean {
   return (
     Boolean(cfg.roleRequestChannelId?.trim()) &&
     (cfg.roleRequestApproverRoleIds ?? []).length > 0 &&
@@ -29,7 +29,7 @@ export function isActionsRoleRequestEnabled(cfg: VpBotConfigFromApi): boolean {
   );
 }
 
-export function isActionsLeaveEnabled(cfg: VpBotConfigFromApi): boolean {
+export function isActionsLeaveEnabled(cfg: BotConfig): boolean {
   return (
     Boolean(cfg.leaveRequestChannelId?.trim()) &&
     (cfg.leaveApproverRoleIds ?? []).length > 0
@@ -43,7 +43,7 @@ function actionsEmbed(): EmbedBuilder {
     .setColor(0x5865f2);
 }
 
-function actionsComponents(cfg: VpBotConfigFromApi) {
+function actionsComponents(cfg: BotConfig) {
   const buttons: ButtonBuilder[] = [];
   if (isActionsRoleRequestEnabled(cfg)) {
     buttons.push(
@@ -68,7 +68,7 @@ function actionsComponents(cfg: VpBotConfigFromApi) {
 /** Публикует или обновляет сообщение с кнопками ролей/отпуска. */
 export async function syncActionsPanel(
   client: Client,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
   api: ApiClient,
 ): Promise<void> {
   const chId = cfg.actionsPanelChannelId?.trim();

@@ -84,7 +84,7 @@ function collectThreadMeta(
 }
 
 /**
- * Очередь: загрузка последних сообщений канала ВП для сайта.
+ * Очередь: загрузка последних сообщений канала ВП (по запросу VDV).
  */
 export function startChannelMessagePoller(
   client: Client,

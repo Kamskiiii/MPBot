@@ -26,7 +26,7 @@ function markerChannel(name: string): string {
 }
 
 /**
- * Заменяет Discord-упоминания на маркеры для цветного рендера на сайте.
+ * Заменяет Discord-упоминания на маркеры для последующего рендера.
  * Роль: {{r:#hex:urlencodedName}}
  * Юзер: {{u:urlencodedName}}
  * Канал: {{c:urlencodedName}}

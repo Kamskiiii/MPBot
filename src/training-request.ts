@@ -9,12 +9,11 @@ import {
   type ButtonInteraction,
 } from 'discord.js';
 import type { createApiClient } from './api.js';
-import type { VpBotConfigFromApi } from './config.js';
+import type { BotConfig } from './config.js';
 import { inviteMembersByRoles } from './invite-thread-members.js';
 
 export const TRAINING_REQUEST_BUTTON_ID = 'vp_training_request_btn';
 
-const DEFAULT_INSTRUCTOR_ROLE_ID = '1559881652287574058';
 const DEFAULT_TRAINING_TITLE = '🎓 Запрос обучения';
 const DEFAULT_TRAINING_DESCRIPTION = [
   'Нажмите кнопку ниже, чтобы подать заявку на прохождение обучения в Военной Полиции.',
@@ -24,8 +23,8 @@ const DEFAULT_TRAINING_DESCRIPTION = [
 
 type ApiClient = ReturnType<typeof createApiClient>;
 
-function trainingEmbed(cfg: VpBotConfigFromApi): EmbedBuilder {
-  const trainingCfg = (cfg as any).training || {};
+function trainingEmbed(cfg: BotConfig): EmbedBuilder {
+  const trainingCfg = cfg.training;
   const title = trainingCfg.panelTitle?.trim() || DEFAULT_TRAINING_TITLE;
   const description = trainingCfg.panelDescription?.trim() || DEFAULT_TRAINING_DESCRIPTION;
 
@@ -49,12 +48,11 @@ function trainingComponents() {
 /** Публикует или обновляет embed с кнопкой запроса обучения; сохраняет id сообщения в API. */
 export async function syncTrainingPanel(
   client: Client,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
   api: ApiClient,
 ): Promise<void> {
-  const trainingCfg = (cfg as any).training || {};
-  // Используем переданный ID канала обучения напрямую или из конфига
-  const chId = trainingCfg.channelId?.trim() || '1559874341447934063';
+  const trainingCfg = cfg.training;
+  const chId = trainingCfg.channelId;
   if (!chId) return;
 
   const botId = client.user?.id;
@@ -91,14 +89,12 @@ export async function syncTrainingPanel(
   }
 
   const sent = await raw.send(payload);
-  if (typeof (api as any).setTrainingPanelMessageId === 'function') {
-    await (api as any).setTrainingPanelMessageId(sent.id);
-  }
+  await api.setTrainingPanelMessageId(sent.id);
 }
 
 export async function handleTrainingRequestButton(
   interaction: ButtonInteraction,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
 ): Promise<void> {
   if (interaction.customId !== TRAINING_REQUEST_BUTTON_ID) return;
 
@@ -109,8 +105,7 @@ export async function handleTrainingRequestButton(
 
   await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-  const trainingCfg = (cfg as any).training || {};
-  const instructorRoleId = (trainingCfg.instructorRoleId as string | undefined)?.trim() || DEFAULT_INSTRUCTOR_ROLE_ID;
+  const instructorRoleId = cfg.training.instructorRoleId ?? '';
 
   const member = interaction.member;
   const user = interaction.user;

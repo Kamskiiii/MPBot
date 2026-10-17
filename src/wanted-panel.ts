@@ -19,7 +19,7 @@ import {
 } from 'discord.js';
 import type { createApiClient, WantedBoardPayload, WantedClass } from './api.js'; //
 import { ApiError } from './api.js'; //
-import type { VpBotConfigFromApi } from './config.js'; //
+import type { BotConfig } from './config.js'; //
 
 type ApiClient = ReturnType<typeof createApiClient>;
 
@@ -140,7 +140,7 @@ export function buildWantedPanelPayload(board: WantedBoardPayload): {
 
 export async function syncWantedPanel(
   client: Client,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
   api: ApiClient,
   board: WantedBoardPayload,
 ): Promise<void> {
@@ -182,7 +182,7 @@ export async function syncWantedPanel(
 
 export function canOperateWanted(
   member: GuildMember,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
 ): boolean {
   if (member.permissions.has(PermissionFlagsBits.Administrator)) return true;
   return (cfg.wantedOperatorRoleIds ?? []).some((id) =>
@@ -197,7 +197,7 @@ function panelClickError(
     guild: unknown;
     member: unknown;
   },
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
 ): string | null {
   const ch = cfg.wantedPanelChannelId?.trim();
   const guildId = cfg.guildId?.trim();
@@ -216,7 +216,7 @@ function panelClickError(
 
 async function requireOperator(
   interaction: ButtonInteraction | StringSelectMenuInteraction | ModalSubmitInteraction,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
 ): Promise<GuildMember | null> {
   const clickErr = panelClickError(interaction, cfg);
   if (clickErr) {
@@ -348,7 +348,7 @@ function removeSelectPage(
 
 export async function handleWantedAddButton(
   interaction: ButtonInteraction,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
 ): Promise<void> {
   if (interaction.customId !== WANTED_ADD_BUTTON_ID) return;
   const member = await requireOperator(interaction, cfg);
@@ -358,7 +358,7 @@ export async function handleWantedAddButton(
 
 export async function handleWantedRemoveButton(
   interaction: ButtonInteraction,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
   api: ApiClient,
 ): Promise<void> {
   if (interaction.customId !== WANTED_REMOVE_BUTTON_ID) return;
@@ -385,7 +385,7 @@ export async function handleWantedRemoveButton(
 
 export async function handleWantedRemovePageButton(
   interaction: ButtonInteraction,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
   api: ApiClient,
 ): Promise<void> {
   if (!interaction.customId.startsWith(WANTED_REMOVE_PAGE_PREFIX)) return;
@@ -403,7 +403,7 @@ export async function handleWantedRemovePageButton(
 
 export async function handleWantedAddModalSubmit(
   interaction: ModalSubmitInteraction,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
 ): Promise<void> {
   if (interaction.customId !== WANTED_ADD_MODAL_ID) return;
   await interaction.deferReply({ flags: MessageFlags.Ephemeral });
@@ -446,7 +446,7 @@ export async function handleWantedAddModalSubmit(
 
 export async function handleWantedClassSelect(
   interaction: StringSelectMenuInteraction,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
   api: ApiClient,
 ): Promise<void> {
   if (interaction.customId !== WANTED_CLASS_SELECT_ID) return;
@@ -497,7 +497,7 @@ export async function handleWantedClassSelect(
 
 export async function handleWantedRemoveSelect(
   interaction: StringSelectMenuInteraction,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
   api: ApiClient,
 ): Promise<void> {
   if (!interaction.customId.startsWith(WANTED_REMOVE_SELECT_PREFIX)) return;

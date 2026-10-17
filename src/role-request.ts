@@ -17,7 +17,7 @@ import {
   type ThreadChannel,
   type User,
 } from 'discord.js';
-import type { VpBotConfigFromApi } from './config.js'; //
+import type { BotConfig } from './config.js'; //
 import type { createApiClient } from './api.js'; //
 import { ApiError } from './api.js'; //
 import {
@@ -64,7 +64,7 @@ function roleLabel(guild: Guild, roleId: string): string {
   return name.slice(0, 100);
 }
 
-export function isRoleRequestConfigured(cfg: VpBotConfigFromApi): boolean {
+export function isRoleRequestConfigured(cfg: BotConfig): boolean {
   const ch = cfg.roleRequestChannelId?.trim();
   const approvers = cfg.roleRequestApproverRoleIds ?? [];
   const positions = cfg.positionRoleIds ?? [];
@@ -74,7 +74,7 @@ export function isRoleRequestConfigured(cfg: VpBotConfigFromApi): boolean {
 
 export function isRoleRequestThread(
   channel: { isThread(): boolean; parentId: string | null },
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
 ): boolean {
   const parentId = cfg.roleRequestChannelId?.trim();
   if (!parentId) return false;
@@ -83,7 +83,7 @@ export function isRoleRequestThread(
 
 export function isRoleRequestContext(
   message: Message,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
 ): boolean {
   const chId = cfg.roleRequestChannelId?.trim();
   if (!chId) return false;
@@ -95,7 +95,7 @@ export function isRoleRequestContext(
 
 export function canModerateRoleRequest(
   member: GuildMember,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
 ): boolean {
   if (member.permissions.has(PermissionFlagsBits.Administrator)) return true;
   return (cfg.roleRequestApproverRoleIds ?? []).some((id) =>
@@ -140,7 +140,7 @@ function getOrInitState(userId: string): RoleFormState {
 
 function buildRoleFormComponents(
   guild: Guild,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
   userId: string,
 ): ActionRowBuilder<StringSelectMenuBuilder | ButtonBuilder>[] {
   const rows: ActionRowBuilder<StringSelectMenuBuilder | ButtonBuilder>[] = [];
@@ -197,7 +197,7 @@ function buildRoleFormComponents(
 
 export async function handleWelcomeRoleRequestButton(
   interaction: ButtonInteraction,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
 ): Promise<void> {
   if (
     interaction.customId !== ACTIONS_ROLE_REQUEST_BUTTON_ID &&
@@ -376,7 +376,7 @@ function buildRoleModerationMessage(params: {
 
 export async function handleRoleRequestSubmit(
   interaction: ButtonInteraction,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
   api: ApiClient,
 ): Promise<void> {
   const userIdFromId = threadIdFromPrefixedCustomId(
@@ -491,7 +491,7 @@ export async function handleRoleRequestSubmit(
 
 export async function handleRoleRequestRejectButton(
   interaction: ButtonInteraction,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
 ): Promise<void> {
   const threadId = threadIdFromPrefixedCustomId(
     ROLE_REQUEST_REJECT_BUTTON_PREFIX,
@@ -536,7 +536,7 @@ export async function handleRoleRequestRejectButton(
 
 export async function handleRoleRequestRejectModalSubmit(
   interaction: ModalSubmitInteraction,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
   api: ApiClient,
 ): Promise<void> {
   const threadId = threadIdFromPrefixedCustomId(

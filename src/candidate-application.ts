@@ -19,7 +19,7 @@ import {
   type ThreadChannel,
   type User,
 } from 'discord.js';
-import type { VpBotConfigFromApi } from './config.js';
+import type { BotConfig } from './config.js';
 import type { createApiClient } from './api.js';
 import { ApiError } from './api.js';
 import { applyDiscordRoleSync } from './apply-discord-role-sync.js';
@@ -49,7 +49,7 @@ function roleLabel(guild: Guild, roleId: string): string {
 }
 
 /** Заявки на вступление настроены: канал, модераторы и список должностей. */
-export function isCandidateApplicationConfigured(cfg: VpBotConfigFromApi): boolean {
+export function isCandidateApplicationConfigured(cfg: BotConfig): boolean {
   const appCh = cfg.candidateApplicationChannelId?.trim();
   const approvers = cfg.candidateApplicationApproverRoleIds ?? [];
   const positions = (cfg.positionRoleIds ?? []).map((id) => id.trim()).filter(Boolean);
@@ -59,7 +59,7 @@ export function isCandidateApplicationConfigured(cfg: VpBotConfigFromApi): boole
 /** Уже состоит: есть любая должность из настроек. */
 export function memberHasPositionRole(
   member: GuildMember,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
 ): boolean {
   return (cfg.positionRoleIds ?? []).some(
     (id) => id.trim() && member.roles.cache.has(id.trim()),
@@ -107,7 +107,7 @@ export async function findCandidateRequestIdByThread(
 
 export function isCandidateApplicationThread(
   channel: { isThread(): boolean; parentId: string | null },
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
 ): boolean {
   const parentId = cfg.candidateApplicationChannelId?.trim();
   if (!parentId) return false;
@@ -116,7 +116,7 @@ export function isCandidateApplicationThread(
 
 export function isCandidateApplicationContext(
   message: Message,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
 ): boolean {
   const chId = cfg.candidateApplicationChannelId?.trim();
   if (!chId) return false;
@@ -128,7 +128,7 @@ export function isCandidateApplicationContext(
 
 export function canModerateCandidateApplication(
   member: GuildMember,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
 ): boolean {
   if (member.permissions.has(PermissionFlagsBits.Administrator)) return true;
   return (cfg.candidateApplicationApproverRoleIds ?? []).some((id) =>
@@ -183,7 +183,7 @@ export function buildCandidateRejectButtonRow(
 
 function buildCandidatePositionSelectRow(
   guild: Guild,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
   threadId: string,
 ): ActionRowBuilder<StringSelectMenuBuilder> | null {
   const positions = (cfg.positionRoleIds ?? [])
@@ -208,7 +208,7 @@ function buildCandidatePositionSelectRow(
 
 export async function handleCandidateApproveButton(
   interaction: ButtonInteraction,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
 ): Promise<void> {
   const threadId = threadIdFromPrefixedCustomId(
     CANDIDATE_APPROVE_BUTTON_PREFIX,
@@ -272,7 +272,7 @@ export async function handleCandidateApproveButton(
 
 export async function handleCandidateApproveSelect(
   interaction: StringSelectMenuInteraction,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
   api: ApiClient,
 ): Promise<void> {
   const threadId = threadIdFromPrefixedCustomId(
@@ -376,7 +376,7 @@ export async function handleCandidateApproveSelect(
 
 export async function handleCandidateRejectButton(
   interaction: ButtonInteraction,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
 ): Promise<void> {
   const threadId = threadIdFromPrefixedCustomId(
     CANDIDATE_REJECT_BUTTON_PREFIX,
@@ -476,7 +476,7 @@ async function dmApplicantAboutRejection(
 
 export async function handleCandidateRejectModalSubmit(
   interaction: ModalSubmitInteraction,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
   api: ApiClient,
 ): Promise<void> {
   const threadId = threadIdFromPrefixedCustomId(
@@ -632,7 +632,7 @@ function parseModalForm(interaction: ModalSubmitInteraction): CandidateApplicati
 
 function validateWelcomeCandidateClick(
   interaction: ButtonInteraction,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
 ): string | null {
   const welcomeCh = cfg.welcomeChannelId?.trim();
   const guildId = cfg.guildId?.trim();
@@ -654,7 +654,7 @@ function validateWelcomeCandidateClick(
 
 export async function handleWelcomeCandidateButton(
   interaction: ButtonInteraction,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
 ): Promise<void> {
   if (interaction.customId !== WELCOME_CANDIDATE_BUTTON_ID) return;
 
@@ -715,7 +715,7 @@ export function buildCandidateModerationMessage(params: {
 
 async function openPrivateCandidateThread(
   guild: Guild,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
   applicantId: string,
   threadTitle: string,
 ): Promise<{ thread: ThreadChannel; channelPlaceholder: Message }> {
@@ -844,7 +844,7 @@ export async function dmApplicantAboutNewThreadMessage(
 
 export async function handleCandidateApplicationModalSubmit(
   interaction: ModalSubmitInteraction,
-  cfg: VpBotConfigFromApi,
+  cfg: BotConfig,
   api: ApiClient,
 ): Promise<void> {
   if (interaction.customId !== CANDIDATE_APPLICATION_MODAL_ID) return;
