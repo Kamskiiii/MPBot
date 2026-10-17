@@ -2,7 +2,7 @@
   "guildId": "1267079204571185214",
   "adminDiscordUserIds": ["683936697431490581"],
 
-  "welcomeChannelId": "1533543980795564213",
+"welcomeChannelId": "1533543980795564213",
   "guestRoleId": "1382836522784522350",
   "candidateRoleId": "1536814922355445801",
   "welcomePanelTitle": "Добро пожаловать в дискорд Управления Военной Полиции Rising sun: RED",
@@ -11,8 +11,13 @@
   "welcomePanelImageUrl": "https://media.discordapp.net/attachments/1316786810424131645/1316789692699775088/1280px-Great_emblem_of_Military_Police_of_Russia.svg.png?ex=6ad394f7&is=6ad24377&hm=006ab54f7baa02c124006ec12f1fcba9351f3bdb0e132bb72128bc8e4bb48b5d&=&format=webp&quality=lossless&width=853&height=1024",
 
   "candidateApplicationChannelId": "1533543980795564213",
-  "candidateApplicationApproverRoleIds": [1267116203487264938, 1267115099974271076],
-  "candidateApprovalAlwaysRoleIds": [1283372722595958866],
+  "candidateApplicationApproverRoleIds": [
+    "1267116203487264938",
+    "1267115099974271076"
+  ],
+  "candidateApprovalAlwaysRoleIds": [
+    "1283372722595958866"
+  ],
 
   "positionRoleIds": [1457738057783578853, 1383115367035043900, 1559881652287574058, 1473506434271412373, 1536814999010541639, 1457738911467049093],
   "positionCategoryRoleId": "1384995494559744151",
