@@ -1,6 +1,7 @@
 import express from 'express';
 import fs from 'fs';
 import path from 'path';
+import { GameDig } from 'gamedig';
 
 const app = express();
 app.use(express.json());
@@ -9,8 +10,9 @@ const PORT = 3000;
 const BOT_SECRET = process.env.VP_DISCORD_BOT_SECRET || 'vpsecreet_trojan_2026';
 const DB_FILE = path.resolve('./db.json');
 
-// ID вашего сервера Arma 3 на BattleMetrics
-const BATTLEMETRICS_SERVER_ID = '30475083';
+// Ваши актуальные данные сервера Arma 3
+const SERVER_IP = '185.207.214.197';
+const SERVER_PORT = 2302; 
 
 function loadDb() {
   const dbFile = path.resolve('./db.json');
@@ -55,7 +57,6 @@ function loadDb() {
   if (!data.activeAlerts) data.activeAlerts = {};
   if (!data.activeDossiers) data.activeDossiers = {};
 
-  // Сразу сохраняем объединенный вариант
   fs.writeFileSync(dbFile, JSON.stringify(data, null, 2));
   return data;
 }
@@ -66,7 +67,7 @@ function saveDb(data) {
 
 let onlinePlayersCache = [];
 
-// Генерация payload для аналитики (wanted-dossier-poller.ts)
+// Генерация аналитики для досье
 function generateAnalytics(person, db) {
   const personSessions = db.sessions.filter(s => s.personId === person.id);
   const sessionCount = personSessions.length;
@@ -132,25 +133,24 @@ function generateAnalytics(person, db) {
   };
 }
 
-// Фоновый опрос BattleMetrics API
+// Прямой опрос сервера Arma 3 через Steam Query (каждые 15 секунд, без задержек)
 async function updateOnlinePlayers() {
   try {
-    const res = await fetch(`https://api.battlemetrics.com/servers/${BATTLEMETRICS_SERVER_ID}?include=player`);
-    if (!res.ok) return;
-    const data = await res.json();
-    const playersData = data.included || [];
-    
-    const currentNames = playersData
-      .filter((item) => item.type === 'player')
-      .map((p) => (p.attributes?.name || '').toLowerCase().trim());
+    const state = await GameDig.query({
+      type: 'arma3',
+      host: SERVER_IP,
+      port: SERVER_PORT,
+    });
+
+    const currentNames = (state.players || [])
+      .map((p) => (p.name || '').toLowerCase().trim())
+      .filter(Boolean);
 
     onlinePlayersCache = currentNames;
     const db = loadDb();
     const now = Date.now();
 
     db.wantedPersons.forEach((person) => {
-      if (person.active === false) return;
-
       const cleanName = person.fullName.toLowerCase().trim();
       const isOnline = currentNames.some((name) => name.includes(cleanName) || cleanName.includes(name));
       const wasOnline = !!db.activeSessions[person.id];
@@ -159,30 +159,33 @@ async function updateOnlinePlayers() {
       if (isOnline && !wasOnline) {
         db.activeSessions[person.id] = now;
 
-        const channelId = db.config.wantedAlertChannelIds?.[0];
-        if (channelId) {
-          db.pendingAlertJobs.push({
-            id: 'alert_in_' + now + '_' + person.id,
-            kind: 'post',
-            channelId: channelId,
-            fullName: person.fullName,
-            wantedClass: person.wantedClass,
-            reward: person.reward,
-            reason: person.reason,
-            serverName: person.fullName,
-            gifUrl: db.config.wantedAlertGifUrl,
-            pingRoleIds: db.config.wantedAlertRoleIds,
-          });
-        }
+        // Оповещения в Discord отправляем ТОЛЬКО если человек в активном розыске
+        if (person.active !== false) {
+          const channelId = db.config.wantedAlertChannelIds?.[0];
+          if (channelId) {
+            db.pendingAlertJobs.push({
+              id: 'alert_in_' + now + '_' + person.id,
+              kind: 'post',
+              channelId: channelId,
+              fullName: person.fullName,
+              wantedClass: person.wantedClass,
+              reward: person.reward,
+              reason: person.reason,
+              serverName: person.fullName,
+              gifUrl: db.config.wantedAlertGifUrl,
+              pingRoleIds: db.config.wantedAlertRoleIds,
+            });
+          }
 
-        const dossierChannelId = db.config.wantedDossierChannelId;
-        if (dossierChannelId && !db.activeDossiers[person.id]) {
-          db.pendingDossierJobs.push({
-            id: 'dossier_open_' + now + '_' + person.id,
-            kind: 'open',
-            channelId: dossierChannelId,
-            payload: generateAnalytics(person, db)
-          });
+          const dossierChannelId = db.config.wantedDossierChannelId;
+          if (dossierChannelId && !db.activeDossiers[person.id]) {
+            db.pendingDossierJobs.push({
+              id: 'dossier_open_' + now + '_' + person.id,
+              kind: 'open',
+              channelId: dossierChannelId,
+              payload: generateAnalytics(person, db)
+            });
+          }
         }
       } 
       // Игрок вышел с сервера
@@ -190,6 +193,7 @@ async function updateOnlinePlayers() {
         const startTime = db.activeSessions[person.id];
         delete db.activeSessions[person.id];
 
+        // Статистика сессий копится ВСЕГДА (даже если карточка снята с розыска)
         db.sessions.push({
           personId: person.id,
           start: startTime,
@@ -197,47 +201,50 @@ async function updateOnlinePlayers() {
           onlinePlayersList: currentNames
         });
 
-        const activeMessageId = db.activeAlerts[person.id];
-        const channelId = db.config.wantedAlertChannelIds?.[0];
-        if (channelId && activeMessageId) {
-          db.pendingAlertJobs.push({
-            id: 'alert_out_' + now + '_' + person.id,
-            kind: 'edit',
-            channelId: channelId,
-            messageId: activeMessageId,
-            fullName: person.fullName,
-            wantedClass: person.wantedClass,
-            reward: person.reward,
-            reason: person.reason,
-            serverName: person.fullName,
-          });
-          delete db.activeAlerts[person.id];
-        }
+        // Discord-уведомления об уходе отправляем только для активных
+        if (person.active !== false) {
+          const activeMessageId = db.activeAlerts[person.id];
+          const channelId = db.config.wantedAlertChannelIds?.[0];
+          if (channelId && activeMessageId) {
+            db.pendingAlertJobs.push({
+              id: 'alert_out_' + now + '_' + person.id,
+              kind: 'edit',
+              channelId: channelId,
+              messageId: activeMessageId,
+              fullName: person.fullName,
+              wantedClass: person.wantedClass,
+              reward: person.reward,
+              reason: person.reason,
+              serverName: person.fullName,
+            });
+            delete db.activeAlerts[person.id];
+          }
 
-        const dossierChannelId = db.config.wantedDossierChannelId;
-        const dossierInfo = db.activeDossiers[person.id];
-        if (dossierChannelId && dossierInfo) {
-          db.pendingDossierJobs.push({
-            id: 'dossier_update_' + now + '_' + person.id,
-            kind: 'update',
-            channelId: dossierChannelId,
-            threadId: dossierInfo.threadId,
-            starterMessageId: dossierInfo.starterMessageId,
-            cardMessageId: dossierInfo.cardMessageId,
-            analyticsMessageId: dossierInfo.analyticsMessageId,
-            payload: generateAnalytics(person, db)
-          });
+          const dossierChannelId = db.config.wantedDossierChannelId;
+          const dossierInfo = db.activeDossiers[person.id];
+          if (dossierChannelId && dossierInfo) {
+            db.pendingDossierJobs.push({
+              id: 'dossier_update_' + now + '_' + person.id,
+              kind: 'update',
+              channelId: dossierChannelId,
+              threadId: dossierInfo.threadId,
+              starterMessageId: dossierInfo.starterMessageId,
+              cardMessageId: dossierInfo.cardMessageId,
+              analyticsMessageId: dossierInfo.analyticsMessageId,
+              payload: generateAnalytics(person, db)
+            });
+          }
         }
       }
     });
 
     saveDb(db);
   } catch (err) {
-    console.warn('BattleMetrics fetch error:', err.message);
+    console.warn('Steam Direct Query error:', err.message);
   }
 }
 
-setInterval(updateOnlinePlayers, 45_000);
+setInterval(updateOnlinePlayers, 15_000);
 setTimeout(updateOnlinePlayers, 2000);
 
 // Middleware авторизации агента
@@ -401,5 +408,5 @@ app.get('/api/vp-agent/channel-message-jobs/pending', (req, res) => res.json({ i
 app.post('/api/vp-agent/channel-message-jobs/ack', (req, res) => res.status(200).send());
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`VDV Full Backend running on port ${PORT}`);
+  console.log(`VDV Full Backend (Steam Query) running on port ${PORT}`);
 });
