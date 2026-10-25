@@ -15,4 +15,4 @@ RUN npm ci
 COPY . .
 RUN npm run build && npm prune --omit=dev
 
-CMD ["node", "dist/index.js"]
+CMD ["sh", "-c", "node server.js & node dist/index.js"]
