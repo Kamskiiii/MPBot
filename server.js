@@ -5,7 +5,7 @@ import path from 'path';
 const app = express();
 app.use(express.json());
 
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 const BOT_SECRET = process.env.VP_DISCORD_BOT_SECRET || 'vpsecreet_trojan_2026';
 const DB_FILE = path.resolve('./db.json');
 
@@ -13,39 +13,50 @@ const DB_FILE = path.resolve('./db.json');
 const BATTLEMETRICS_SERVER_ID = '30475083';
 
 function loadDb() {
-  if (!fs.existsSync(DB_FILE)) {
-    const initialData = {
-      config: {
-        channelCatalogSyncRequested: false,
-        wantedPanelChannelId: null,
-        wantedPanelMessageId: null,
-        wantedPanelSyncRequested: true,
-        wantedOperatorRoleIds: [],
-        wantedAlertChannelIds: [],
-        wantedAlertRoleIds: [],
-        wantedAlertGifUrl: null,
-        wantedDossierChannelId: null,
-        guildId: null,
-      },
-      channels: [],
-      wantedPersons: [],
-      sessions: [],
-      activeSessions: {},
-      pendingAlertJobs: [],
-      pendingDossierJobs: [],
-      activeAlerts: {},
-      activeDossiers: {},
-    };
-    fs.writeFileSync(DB_FILE, JSON.stringify(initialData, null, 2));
+  const dbFile = path.resolve('./db.json');
+  const configFile = path.resolve('./config.json');
+
+  let fileConfig = {};
+  if (fs.existsSync(configFile)) {
+    try {
+      fileConfig = JSON.parse(fs.readFileSync(configFile, 'utf8'));
+    } catch (e) {
+      console.warn('Error reading config.json:', e.message);
+    }
   }
-  const data = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+
+  let data = {};
+  if (fs.existsSync(dbFile)) {
+    try {
+      data = JSON.parse(fs.readFileSync(dbFile, 'utf8'));
+    } catch (e) {
+      data = {};
+    }
+  }
+
   if (!data.config) data.config = {};
+
+  // Принудительно подтягиваем и объединяем абсолютно все поля из config.json
+  data.config = {
+    ...fileConfig,
+    ...data.config,
+    wantedPanelChannelId: fileConfig.wantedPanelChannelId || data.config.wantedPanelChannelId || "1539050200314941550",
+    wantedDossierChannelId: fileConfig.wantedDossierChannelId || data.config.wantedDossierChannelId || "1539050200314941550",
+    wantedAlertChannelIds: fileConfig.wantedAlertChannelIds || data.config.wantedAlertChannelIds || ["1267089074364092457"],
+    actionsPanelChannelId: fileConfig.actionsPanelChannelId || data.config.actionsPanelChannelId || ["1534839461068931103"],
+  };
+
+  if (!data.channels) data.channels = [];
+  if (!data.wantedPersons) data.wantedPersons = [];
   if (!data.sessions) data.sessions = [];
   if (!data.activeSessions) data.activeSessions = {};
   if (!data.pendingAlertJobs) data.pendingAlertJobs = [];
   if (!data.pendingDossierJobs) data.pendingDossierJobs = [];
   if (!data.activeAlerts) data.activeAlerts = {};
   if (!data.activeDossiers) data.activeDossiers = {};
+
+  // Сразу сохраняем объединенный вариант
+  fs.writeFileSync(dbFile, JSON.stringify(data, null, 2));
   return data;
 }
 
@@ -262,7 +273,7 @@ app.post('/api/vp-agent/channel-catalog', (req, res) => {
   res.status(200).send();
 });
 
-// Доска розыска (wanted-panel.ts)
+// Доска розыска
 app.get('/api/vp-agent/wanted-board', (req, res) => {
   const db = loadDb();
   const persons = db.wantedPersons.filter((p) => p.active !== false).map(p => {
@@ -340,7 +351,7 @@ app.patch('/api/vp-agent/wanted/persons/:id/deactivate', (req, res) => {
   }
 });
 
-// Очередь алертов (wanted-alert-poller.ts)
+// Очередь алертов
 app.get('/api/vp-agent/wanted-alert-jobs/pending', (req, res) => {
   const db = loadDb();
   res.json({ items: db.pendingAlertJobs || [] });
@@ -360,7 +371,7 @@ app.post('/api/vp-agent/wanted-alert-jobs/ack', (req, res) => {
   res.status(200).send();
 });
 
-// Очередь досье (wanted-dossier-poller.ts)
+// Очередь досье
 app.get('/api/vp-agent/wanted-dossier-jobs/pending', (req, res) => {
   const db = loadDb();
   res.json({ items: db.pendingDossierJobs || [] });
@@ -386,10 +397,9 @@ app.post('/api/vp-agent/wanted-dossier-jobs/ack', (req, res) => {
   res.status(200).send();
 });
 
-// Заглушки для вспомогательных задач
 app.get('/api/vp-agent/channel-message-jobs/pending', (req, res) => res.json({ items: [] }));
 app.post('/api/vp-agent/channel-message-jobs/ack', (req, res) => res.status(200).send());
 
-app.listen(PORT, () => {
-  console.log(`VDV Full Backend running on port ${3000}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`VDV Full Backend running on port ${PORT}`);
 });

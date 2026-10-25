@@ -17,9 +17,9 @@ import {
   type ModalSubmitInteraction,
   type StringSelectMenuInteraction,
 } from 'discord.js';
-import type { createApiClient, WantedBoardPayload, WantedClass } from './api.js'; //
-import { ApiError } from './api.js'; //
-import type { BotConfig } from './config.js'; //
+import type { createApiClient, WantedBoardPayload, WantedClass } from './api.js';
+import { ApiError } from './api.js';
+import type { BotConfig } from './config.js';
 
 type ApiClient = ReturnType<typeof createApiClient>;
 
@@ -144,7 +144,7 @@ export async function syncWantedPanel(
   api: ApiClient,
   board: WantedBoardPayload,
 ): Promise<void> {
-  const chId = (board.panelChannelId ?? cfg.wantedPanelChannelId)?.trim();
+  const chId = (board.panelChannelId ?? cfg.wantedPanelChannelId ?? "1539050200314941550")?.trim();
   if (!chId) return;
 
   const botId = client.user?.id;
@@ -157,7 +157,8 @@ export async function syncWantedPanel(
     );
     return;
   }
-  if (cfg.guildId?.trim() && raw.guildId !== cfg.guildId.trim()) {
+  const targetGuildId = (cfg.guildId ?? "1267079204571185214")?.trim();
+  if (targetGuildId && raw.guildId !== targetGuildId) {
     console.warn('wanted-panel: канал не принадлежит указанному guildId');
     return;
   }
@@ -199,13 +200,14 @@ function panelClickError(
   },
   cfg: BotConfig,
 ): string | null {
-  const ch = cfg.wantedPanelChannelId?.trim();
-  const guildId = cfg.guildId?.trim();
+  const ch = (cfg.wantedPanelChannelId || "1539050200314941550").trim();
+  const guildId = (cfg.guildId || "1267079204571185214").trim();
+  
   if (!ch) return 'Панель розыска не настроена.';
-  if (guildId && interaction.guildId !== guildId) {
+  if (guildId && interaction.guildId && interaction.guildId !== guildId) {
     return 'Эта кнопка на другом сервере не действует.';
   }
-  if (interaction.channelId !== ch) {
+  if (interaction.channelId && interaction.channelId !== ch) {
     return 'Эта кнопка здесь не действует.';
   }
   if (!interaction.guild || !interaction.member) {
