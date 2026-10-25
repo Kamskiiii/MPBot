@@ -56,7 +56,14 @@
   "leaveActiveRoleId": "1382842996956860548",
 
   "actionsPanelChannelId": "1534839461068931103",
-
+  "wantedPanelChannelId": "1539050200314941550",
+  "wantedAlertChannelIds": "1267089074364092457" ,
+  "wantedDossierChannelId": "1539050200314941550" ,
+  "wantedOperatorRoleIds": [
+    "1267116203487264938",
+    "1457738057783578853",
+    "1267115099974271076",
+    "1560657608409481219"],
   "training": {
     "channelId": "1559874341447934063",
     "instructorRoleId": "1559881652287574058",
