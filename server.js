@@ -2,7 +2,6 @@ import express from 'express';
 import fs from 'fs';
 import path from 'path';
 
-// Безопасный импорт gamedig
 let GameDig;
 try {
   const gamedigModule = await import('gamedig');
@@ -157,7 +156,13 @@ async function updateOnlinePlayers() {
 
     db.wantedPersons.forEach((person) => {
       const cleanName = person.fullName.toLowerCase().trim();
-      const isOnline = currentNames.some((name) => name.includes(cleanName) || cleanName.includes(name));
+      const personWords = cleanName.split(/\s+/);
+      const primaryWord = personWords[0];
+
+      const isOnline = currentNames.some((steamName) => {
+        return steamName.includes(primaryWord) || cleanName.includes(steamName);
+      });
+
       const wasOnline = !!db.activeSessions[person.id];
 
       if (isOnline && !wasOnline) {
@@ -282,8 +287,21 @@ app.get('/api/vp-agent/wanted-board', (req, res) => {
   });
   res.json({ persons, panelChannelId: db.config.wantedPanelChannelId, panelMessageId: db.config.wantedPanelMessageId });
 });
+
 app.post('/api/vp-agent/wanted/persons', (req, res) => {
   const db = loadDb();
+  const cleanNewName = (req.body.fullName || '').toLowerCase().trim();
+
+  let existing = db.wantedPersons.find(p => p.fullName.toLowerCase().trim() === cleanNewName);
+  if (existing) {
+    existing.active = true;
+    existing.reason = req.body.reason || existing.reason;
+    existing.wantedClass = req.body.wantedClass || existing.wantedClass;
+    existing.reward = req.body.reward || existing.reward;
+    saveDb(db);
+    return res.json(existing);
+  }
+
   const newPerson = {
     id: Date.now().toString(),
     fullName: req.body.fullName,
@@ -295,6 +313,7 @@ app.post('/api/vp-agent/wanted/persons', (req, res) => {
     createdAt: new Date().toISOString(),
   };
   db.wantedPersons.push(newPerson);
+
   const dossierChannelId = db.config.wantedDossierChannelId;
   if (dossierChannelId) {
     db.pendingDossierJobs.push({
@@ -304,9 +323,11 @@ app.post('/api/vp-agent/wanted/persons', (req, res) => {
       payload: generateAnalytics(newPerson, db)
     });
   }
+
   saveDb(db);
   res.json(newPerson);
 });
+
 app.patch('/api/vp-agent/wanted/persons/:id/deactivate', (req, res) => {
   const db = loadDb();
   const person = db.wantedPersons.find((p) => p.id === req.params.id);
@@ -334,6 +355,7 @@ app.patch('/api/vp-agent/wanted/persons/:id/deactivate', (req, res) => {
     res.status(404).json({ error: 'Person not found' });
   }
 });
+
 app.get('/api/vp-agent/wanted-alert-jobs/pending', (req, res) => {
   const db = loadDb();
   res.json({ items: db.pendingAlertJobs || [] });
@@ -370,7 +392,6 @@ app.post('/api/vp-agent/channel-message-jobs/ack', (req, res) => res.status(200)
 app.listen(PORT, '127.0.0.1', () => {
   console.log(`Unified Backend running on port ${PORT}`);
   
-  // Автоматический запуск скомпилированного бота из папки dist
   import('./dist/index.js').catch((err) => {
     console.error('Не удалось автоматически импортировать dist/index.js:', err.message);
   });
