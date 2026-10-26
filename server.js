@@ -50,6 +50,8 @@ function loadDb() {
     wantedPanelChannelId: fileConfig.wantedPanelChannelId || data.config.wantedPanelChannelId || "1539050200314941550",
     wantedDossierChannelId: fileConfig.wantedDossierChannelId || data.config.wantedDossierChannelId || "1539050200314941550",
     wantedAlertChannelIds: fileConfig.wantedAlertChannelIds || data.config.wantedAlertChannelIds || ["1267089074364092457"],
+    // Жестко прописываем вашу роль для пингов
+    wantedAlertRoleIds: ["1283372722595958866"],
     actionsPanelChannelId: fileConfig.actionsPanelChannelId || data.config.actionsPanelChannelId || ["1534839461068931103"],
   };
 
@@ -171,10 +173,15 @@ async function updateOnlinePlayers() {
         if (person.active !== false) {
           const channelId = db.config.wantedAlertChannelIds?.[0];
           if (channelId) {
+            const roleMentions = (db.config.wantedAlertRoleIds || [])
+              .map(roleId => `<@&${roleId}>`)
+              .join(' ');
+
             db.pendingAlertJobs.push({
               id: 'alert_in_' + now + '_' + person.id,
               kind: 'post',
               channelId: channelId,
+              content: roleMentions ? `${roleMentions} **${person.fullName}** в розыске и сейчас на сервере.` : undefined,
               fullName: person.fullName,
               wantedClass: person.wantedClass,
               reward: person.reward,
@@ -186,7 +193,8 @@ async function updateOnlinePlayers() {
           }
 
           const dossierChannelId = db.config.wantedDossierChannelId;
-          if (dossierChannelId && !db.activeDossiers[person.id]) {
+          const alreadyInQueue = db.pendingDossierJobs.some(j => j.payload && j.payload.fullName === person.fullName);
+          if (dossierChannelId && !db.activeDossiers[person.id] && !alreadyInQueue) {
             db.pendingDossierJobs.push({
               id: 'dossier_open_' + now + '_' + person.id,
               kind: 'open',
@@ -315,7 +323,8 @@ app.post('/api/vp-agent/wanted/persons', (req, res) => {
   db.wantedPersons.push(newPerson);
 
   const dossierChannelId = db.config.wantedDossierChannelId;
-  if (dossierChannelId) {
+  const alreadyInQueue = db.pendingDossierJobs.some(j => j.payload && j.payload.fullName === newPerson.fullName);
+  if (dossierChannelId && !db.activeDossiers[newPerson.id] && !alreadyInQueue) {
     db.pendingDossierJobs.push({
       id: 'dossier_open_new_' + newPerson.id,
       kind: 'open',
