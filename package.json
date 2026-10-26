@@ -6,7 +6,7 @@
   "description": "Discord-бот Военной Полиции: заявки, отпуска, роли, обучение (автономный, SQLite)",
   "scripts": {
     "build": "tsc",
-    "start": "concurrently \"node server.js\" \"node dist/index.js\"",
+    "start": "node server.js",
     "start:dev": "tsx watch src/index.ts",
     "dev": "tsx watch src/index.ts",
     "test": "tsx --test test/*.test.ts"
@@ -17,6 +17,7 @@
     "discord.js": "^14.16.3",
     "dotenv": "^16.6.1",
     "express": "^4.21.2",
+    "gamedig": "^5.1.0",
     "https-proxy-agent": "^7.0.6",
     "socks-proxy-agent": "^8.0.5",
     "undici": "^6.24.1",
