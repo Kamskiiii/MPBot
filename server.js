@@ -1,16 +1,23 @@
 import express from 'express';
 import fs from 'fs';
 import path from 'path';
-import { GameDig } from 'gamedig';
+
+// Безопасный импорт gamedig
+let GameDig;
+try {
+  const gamedigModule = await import('gamedig');
+  GameDig = gamedigModule.GameDig || gamedigModule.default || gamedigModule;
+} catch (e) {
+  console.error('КРИТИЧЕСКАЯ ОШИБКА: Не установлен пакет gamedig! Выполните в консоли: npm install gamedig');
+}
 
 const app = express();
 app.use(express.json());
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const BOT_SECRET = process.env.VP_DISCORD_BOT_SECRET || 'vpsecreet_trojan_2026';
 const DB_FILE = path.resolve('./db.json');
 
-// Ваши актуальные данные сервера Arma 3
 const SERVER_IP = '185.207.214.197';
 const SERVER_PORT = 2302; 
 
@@ -38,7 +45,6 @@ function loadDb() {
 
   if (!data.config) data.config = {};
 
-  // Принудительно подтягиваем и объединяем абсолютно все поля из config.json
   data.config = {
     ...fileConfig,
     ...data.config,
@@ -67,7 +73,6 @@ function saveDb(data) {
 
 let onlinePlayersCache = [];
 
-// Генерация аналитики для досье
 function generateAnalytics(person, db) {
   const personSessions = db.sessions.filter(s => s.personId === person.id);
   const sessionCount = personSessions.length;
@@ -133,8 +138,8 @@ function generateAnalytics(person, db) {
   };
 }
 
-// Прямой опрос сервера Arma 3 через Steam Query (каждые 15 секунд, без задержек)
 async function updateOnlinePlayers() {
+  if (!GameDig) return;
   try {
     const state = await GameDig.query({
       type: 'arma3',
@@ -155,11 +160,9 @@ async function updateOnlinePlayers() {
       const isOnline = currentNames.some((name) => name.includes(cleanName) || cleanName.includes(name));
       const wasOnline = !!db.activeSessions[person.id];
 
-      // Игрок зашел на сервер
       if (isOnline && !wasOnline) {
         db.activeSessions[person.id] = now;
 
-        // Оповещения в Discord отправляем ТОЛЬКО если человек в активном розыске
         if (person.active !== false) {
           const channelId = db.config.wantedAlertChannelIds?.[0];
           if (channelId) {
@@ -188,12 +191,10 @@ async function updateOnlinePlayers() {
           }
         }
       } 
-      // Игрок вышел с сервера
       else if (!isOnline && wasOnline) {
         const startTime = db.activeSessions[person.id];
         delete db.activeSessions[person.id];
 
-        // Статистика сессий копится ВСЕГДА (даже если карточка снята с розыска)
         db.sessions.push({
           personId: person.id,
           start: startTime,
@@ -201,7 +202,6 @@ async function updateOnlinePlayers() {
           onlinePlayersList: currentNames
         });
 
-        // Discord-уведомления об уходе отправляем только для активных
         if (person.active !== false) {
           const activeMessageId = db.activeAlerts[person.id];
           const channelId = db.config.wantedAlertChannelIds?.[0];
@@ -247,7 +247,6 @@ async function updateOnlinePlayers() {
 setInterval(updateOnlinePlayers, 15_000);
 setTimeout(updateOnlinePlayers, 2000);
 
-// Middleware авторизации агента
 app.use('/api/vp-agent', (req, res, next) => {
   const secret = req.headers['x-bot-secret'];
   if (secret !== BOT_SECRET) {
@@ -256,49 +255,33 @@ app.use('/api/vp-agent', (req, res, next) => {
   next();
 });
 
-// Конфигурация бота
 app.get('/api/vp-agent/bot-config', (req, res) => res.json(loadDb().config));
-
 app.patch('/api/vp-agent/bot-config/panel-sync-ack', (req, res) => {
   const db = loadDb();
   db.config.wantedPanelSyncRequested = false;
   saveDb(db);
   res.status(200).send();
 });
-
 app.patch('/api/vp-agent/bot-config/wanted-panel-message', (req, res) => {
   const db = loadDb();
   db.config.wantedPanelMessageId = req.body.messageId;
   saveDb(db);
   res.status(200).send();
 });
-
 app.post('/api/vp-agent/channel-catalog', (req, res) => {
   const db = loadDb();
   db.channels = req.body.channels || [];
   saveDb(db);
   res.status(200).send();
 });
-
-// Доска розыска
 app.get('/api/vp-agent/wanted-board', (req, res) => {
   const db = loadDb();
   const persons = db.wantedPersons.filter((p) => p.active !== false).map(p => {
     const isOnline = !!db.activeSessions[p.id];
-    return {
-      ...p,
-      online: isOnline,
-      serverName: isOnline ? p.fullName : null
-    };
+    return { ...p, online: isOnline, serverName: isOnline ? p.fullName : null };
   });
-  res.json({
-    persons,
-    panelChannelId: db.config.wantedPanelChannelId,
-    panelMessageId: db.config.wantedPanelMessageId,
-  });
+  res.json({ persons, panelChannelId: db.config.wantedPanelChannelId, panelMessageId: db.config.wantedPanelMessageId });
 });
-
-// Создание записи в розыске
 app.post('/api/vp-agent/wanted/persons', (req, res) => {
   const db = loadDb();
   const newPerson = {
@@ -312,7 +295,6 @@ app.post('/api/vp-agent/wanted/persons', (req, res) => {
     createdAt: new Date().toISOString(),
   };
   db.wantedPersons.push(newPerson);
-
   const dossierChannelId = db.config.wantedDossierChannelId;
   if (dossierChannelId) {
     db.pendingDossierJobs.push({
@@ -322,19 +304,15 @@ app.post('/api/vp-agent/wanted/persons', (req, res) => {
       payload: generateAnalytics(newPerson, db)
     });
   }
-
   saveDb(db);
   res.json(newPerson);
 });
-
-// Снятие с розыска
 app.patch('/api/vp-agent/wanted/persons/:id/deactivate', (req, res) => {
   const db = loadDb();
   const person = db.wantedPersons.find((p) => p.id === req.params.id);
   if (person) {
     person.active = false;
     delete db.activeAlerts[person.id];
-
     const dossierChannelId = db.config.wantedDossierChannelId;
     const dossierInfo = db.activeDossiers[person.id];
     if (dossierChannelId && dossierInfo) {
@@ -350,63 +328,50 @@ app.patch('/api/vp-agent/wanted/persons/:id/deactivate', (req, res) => {
       });
       delete db.activeDossiers[person.id];
     }
-
     saveDb(db);
     res.json(person);
   } else {
     res.status(404).json({ error: 'Person not found' });
   }
 });
-
-// Очередь алертов
 app.get('/api/vp-agent/wanted-alert-jobs/pending', (req, res) => {
   const db = loadDb();
   res.json({ items: db.pendingAlertJobs || [] });
 });
-
 app.post('/api/vp-agent/wanted-alert-jobs/ack', (req, res) => {
   const db = loadDb();
   const { jobId, messageId } = req.body;
   db.pendingAlertJobs = (db.pendingAlertJobs || []).filter((j) => j.id !== jobId);
   if (messageId) {
     const matchedPerson = db.wantedPersons.find(p => jobId.includes(p.id));
-    if (matchedPerson) {
-      db.activeAlerts[matchedPerson.id] = messageId;
-    }
+    if (matchedPerson) db.activeAlerts[matchedPerson.id] = messageId;
   }
   saveDb(db);
   res.status(200).send();
 });
-
-// Очередь досье
 app.get('/api/vp-agent/wanted-dossier-jobs/pending', (req, res) => {
   const db = loadDb();
   res.json({ items: db.pendingDossierJobs || [] });
 });
-
 app.post('/api/vp-agent/wanted-dossier-jobs/ack', (req, res) => {
   const db = loadDb();
   const { jobId, threadId, starterMessageId, cardMessageId, analyticsMessageId } = req.body;
-  
   db.pendingDossierJobs = (db.pendingDossierJobs || []).filter((j) => j.id !== jobId);
-
   const matchedPerson = db.wantedPersons.find(p => jobId.includes(p.id));
   if (matchedPerson && threadId) {
-    db.activeDossiers[matchedPerson.id] = {
-      threadId,
-      starterMessageId,
-      cardMessageId,
-      analyticsMessageId
-    };
+    db.activeDossiers[matchedPerson.id] = { threadId, starterMessageId, cardMessageId, analyticsMessageId };
   }
-
   saveDb(db);
   res.status(200).send();
 });
-
 app.get('/api/vp-agent/channel-message-jobs/pending', (req, res) => res.json({ items: [] }));
 app.post('/api/vp-agent/channel-message-jobs/ack', (req, res) => res.status(200).send());
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`VDV Full Backend (Steam Query) running on port ${PORT}`);
+app.listen(PORT, '127.0.0.1', () => {
+  console.log(`Unified Backend running on port ${PORT}`);
+  
+  // Автоматический запуск скомпилированного бота из папки dist
+  import('./dist/index.js').catch((err) => {
+    console.error('Не удалось автоматически импортировать dist/index.js:', err.message);
+  });
 });
